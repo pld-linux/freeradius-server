@@ -1,0 +1,83 @@
+diff -urN freeradius-server-2.0.3.orig/raddb/radiusd.conf.in freeradius-server-2.0.3/raddb/radiusd.conf.in
+--- freeradius-server-2.0.3.orig/raddb/radiusd.conf.in	2008-03-04 17:53:02.000000000 +0100
++++ freeradius-server-2.0.3/raddb/radiusd.conf.in	2008-04-09 17:00:51.000000000 +0200
+@@ -99,7 +99,7 @@
+ #	make
+ #	make install
+ #
+-libdir = @libdir@
++libdir = @libdir@/freeradius
+ 
+ #  pidfile: Where to place the PID of the RADIUS server.
+ #
+diff -urN freeradius-server-2.0.3.orig/src/main/mainconfig.c freeradius-server-2.0.3/src/main/mainconfig.c
+--- freeradius-server-2.0.3.orig/src/main/mainconfig.c	2008-03-06 11:28:36.000000000 +0100
++++ freeradius-server-2.0.3/src/main/mainconfig.c	2008-04-09 17:00:51.000000000 +0200
+@@ -171,7 +171,7 @@
+ 	{ "prefix",             PW_TYPE_STRING_PTR, 0, &prefix,            "/usr/local"},
+ 	{ "localstatedir",      PW_TYPE_STRING_PTR, 0, &localstatedir,     "${prefix}/var"},
+ 	{ "logdir",             PW_TYPE_STRING_PTR, 0, &radlog_dir,        "${localstatedir}/log"},
+-	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib"},
++	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib/freeradius"},
+ 	{ "radacctdir",         PW_TYPE_STRING_PTR, 0, &radacct_dir,       "${logdir}/radacct" },
+ 	{ "hostname_lookups",   PW_TYPE_BOOLEAN,    0, &librad_dodns,      "no" },
+ 	{ "max_request_time", PW_TYPE_INTEGER, 0, &mainconfig.max_request_time, Stringify(MAX_REQUEST_TIME) },
+diff -urN freeradius-server-2.0.3.orig/src/modules/rlm_sql/drivers/rules.mak freeradius-server-2.0.3/src/modules/rlm_sql/drivers/rules.mak
+--- freeradius-server-2.0.3.orig/src/modules/rlm_sql/drivers/rules.mak	2007-06-28 07:11:36.000000000 +0200
++++ freeradius-server-2.0.3/src/modules/rlm_sql/drivers/rules.mak	2008-04-09 17:02:24.000000000 +0200
+@@ -101,7 +101,7 @@
+ $(TARGET).la: $(LT_OBJS)
+ 	$(LIBTOOL) --mode=link $(CC) -release $(RADIUSD_VERSION) \
+ 	-module $(LINK_MODE) $(LDFLAGS) $(RLM_SQL_LDFLAGS) -o $@ \
+-	-rpath $(libdir) $^ $(RLM_SQL_LIBS)
++	-rpath $(libdir)/freeradius $^ $(RLM_SQL_LIBS)
+ 
+ #######################################################################
+ #
+@@ -139,12 +139,12 @@
+ #  Do any module-specific installation.
+ #
+ #  If there isn't a TARGET defined, then don't do anything.
+-#  Otherwise, install the libraries into $(libdir)
++#  Otherwise, install the libraries into $(libdir)/freeradius
+ #
+ install:
+ 	if [ "x$(TARGET)" != "x" ]; then \
+ 	    $(LIBTOOL) --mode=install $(INSTALL) -c \
+-		$(TARGET).la $(R)$(libdir)/$(TARGET).la || exit $$?; \
+-	    rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la; \
+-	    ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la || exit $$?; \
++		$(TARGET).la $(R)$(libdir)/freeradius/$(TARGET).la || exit $$?; \
++	    rm -f $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION).la; \
++	    ln -s $(TARGET).la $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION).la || exit $$?; \
+ 	fi
+diff -urN freeradius-server-2.0.3.orig/src/modules/rules.mak freeradius-server-2.0.3/src/modules/rules.mak
+--- freeradius-server-2.0.3.orig/src/modules/rules.mak	2008-01-10 11:12:01.000000000 +0100
++++ freeradius-server-2.0.3/src/modules/rules.mak	2008-04-09 17:01:23.000000000 +0200
+@@ -115,7 +115,7 @@
+ $(TARGET).la: $(LT_OBJS)
+ 	$(LIBTOOL) --mode=link $(CC) -release $(RADIUSD_VERSION) \
+ 	-module $(LINK_MODE) $(LDFLAGS) $(RLM_LDFLAGS) -o $@     \
+-	-rpath $(libdir) $^ $(LIBRADIUS) $(RLM_LIBS) $(LIBS)
++	-rpath $(libdir)/freeradius $^ $(LIBRADIUS) $(RLM_LIBS) $(LIBS)
+ 
+ #######################################################################
+ #
+@@ -156,13 +156,13 @@
+ #  Do any module-specific installation.
+ #
+ #  If there isn't a TARGET defined, then don't do anything.
+-#  Otherwise, install the libraries into $(libdir)
++#  Otherwise, install the libraries into $(libdir)/freeradius
+ #
+ install:
+ 	@[ "x$(RLM_INSTALL)" = "x" ] || $(MAKE) $(MFLAGS) $(RLM_INSTALL)
+ 	if [ "x$(TARGET)" != "x" ]; then \
+ 	    $(LIBTOOL) --mode=install $(INSTALL) -c \
+-		$(TARGET).la $(R)$(libdir)/$(TARGET).la || exit $$?; \
+-	    rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la; \
+-	    ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la || exit $$?; \
++		$(TARGET).la $(R)$(libdir)/freeradius/$(TARGET).la || exit $$?; \
++	    rm -f $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION).la; \
++	    ln -s $(TARGET).la $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION).la || exit $$?; \
+ 	fi
