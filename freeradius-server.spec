@@ -53,9 +53,10 @@ Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERS
 Requires:	rc-scripts
 Provides:	group(radius)
 Provides:	user(radius)
+Provides:	freeradius = %{version}-%{release}
 Obsoletes:	cistron-radius
+Obsoletes:	freeradius < 2.0
 Conflicts:	logrotate < 3.7-4
-Conflicts:	freeradius
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
