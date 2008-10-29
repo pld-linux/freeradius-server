@@ -4,6 +4,20 @@
 #   (log files are created by server)
 # - prepare to use with --as-needed
 # - ac/am regeneration doesn't work
+# - move plugins into separate packages:
+#   /usr/sbin/radsniff: libpcap
+#   /usr/lib/freeradius/rlm_eap_ikev2-2.1.1.so: libeap-ikev2
+#   /usr/lib/freeradius/rlm_krb5-2.1.1.so: libkrb5, libcom_err, libkrb5support, libkeyutils
+#   /usr/lib/freeradius/rlm_ldap-2.1.1.so: libldap_r, liblber, libsasl2, libcrypt, libssl
+#   /usr/lib/freeradius/rlm_otp-2.1.1.so
+#   /usr/lib/freeradius/rlm_pam-2.1.1.so
+#   /usr/lib/freeradius/rlm_perl-2.1.1.so
+#   /usr/lib/freeradius/rlm_python-2.1.1.so
+#   /usr/lib/freeradius/rlm_sql_mysql-2.1.1.so
+#   /usr/lib/freeradius/rlm_sql_postgresql-2.1.1.so
+#   /usr/lib/freeradius/rlm_sql_sqlite-2.1.1.so
+#   /usr/lib/freeradius/rlm_sql_unixodbc-2.1.1.so
+#   /usr/lib/freeradius/rlm_unix-2.1.1.so
 #
 %include	/usr/lib/rpm/macros.perl
 #
@@ -11,7 +25,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.1
-Release:	0.9
+Release:	0.10
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -52,6 +66,7 @@ Requires(pre):	/usr/sbin/useradd
 Requires(pre):	/usr/sbin/usermod
 Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
 Requires:	rc-scripts
+Requires:	%{name}-libs = %{version}-%{release}
 Provides:	group(radius)
 Provides:	user(radius)
 Provides:	freeradius = %{version}-%{release}
@@ -60,6 +75,7 @@ Obsoletes:	freeradius < 2.0
 Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+%define		mibdir	%{_datadir}/snmp/mibs
 %define         filterout_ld    -Wl,--as-needed
 
 %description
@@ -73,6 +89,34 @@ Projekt FreeRadius ma na celu stworzenie szybkiego i wysoce
 konfigurowalnego serwera RADIUS na licencji GPL. Ten jest podobny do
 Livingston 2.0 RADIUS server ale ma o wiele więcej funkcji i posiada
 większe możliwości konfigurowania.
+
+%package mibs
+Summary:        MIB database for %{name}
+Summary(pl.UTF-8):      Baza danych MIB dla %{name}
+Group:          Applications/System
+Suggests:	libsmi
+
+%description mibs
+MIB database for %{name}.
+
+%description mibs -l pl.UTF-8
+Baza danych MIB dla %{name}.
+
+
+%package libs
+Summary:	Freeradius libraries
+Group:          Libraries
+
+%description libs
+Freeradius libraries.
+
+%package devel
+Summary:	Header files and devel library
+Group:          Development/Libraries
+Requires:	%{name}-libs = %{version}-%{release}
+
+%description devel
+Header files and libraries.
 
 %prep
 %setup -q
@@ -109,7 +153,8 @@ LIBS="-lgdbm" \
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,pam.d} \
-	$RPM_BUILD_ROOT%{_var}/log/{,archive}/freeradius/radacct
+	$RPM_BUILD_ROOT%{_var}/log/{,archive}/freeradius/radacct \
+	$RPM_BUILD_ROOT%{mibdir}
 
 %{__make} -j1 install \
 	R=$RPM_BUILD_ROOT
@@ -117,6 +162,9 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,pam.d} \
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/logrotate.d/%{name}
 install %{SOURCE2}	$RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
 install %{SOURCE3}	$RPM_BUILD_ROOT/etc/pam.d/radius
+
+# Install mibs:
+install mibs/FREERADIUS-*.txt $RPM_BUILD_ROOT%{mibdir}
 
 # Cleanups:
 rm -rf $RPM_BUILD_ROOT%{_docdir}/freeradius \
@@ -156,10 +204,12 @@ if [ "$1" = "0" ]; then
 	%groupremove radius
 fi
 
+%post   libs -p /sbin/ldconfig                                                                                        
+%postun libs -p /sbin/ldconfig
+
 %files
 %defattr(644,root,root,755)
-%doc doc/*
-%dir %{_libdir}/freeradius
+%doc doc/* scripts
 %dir %{_sysconfdir}/raddb
 %attr(771,root,radius) %dir %{_var}/log/freeradius
 %attr(771,root,radius) %dir %{_var}/log/freeradius/radacct
@@ -172,9 +222,24 @@ fi
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
 %attr(755,root,root) %{_bindir}/*
 %attr(755,root,root) %{_sbindir}/*
-%attr(755,root,root) %{_libdir}/*.so
 %attr(755,root,root) %{_libdir}/freeradius/*.la
 %attr(755,root,root) %{_libdir}/freeradius/*.so
 %{_datadir}/freeradius
-%{_includedir}/freeradius
 %{_mandir}/man?/*
+
+%files libs
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.?.so
+%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.?.so
+%dir %{_libdir}/freeradius
+
+%files devel
+%defattr(644,root,root,755)
+%{_includedir}/freeradius
+%{_libdir}/libfreeradius-eap.so
+%{_libdir}/libfreeradius-radius.so
+
+%files mibs
+%defattr(644,root,root,755)
+%doc mibs/*.chart
+%{mibdir}/*.*
