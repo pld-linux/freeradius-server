@@ -13,11 +13,8 @@
 #   /usr/lib/freeradius/rlm_pam-2.1.1.so
 #   /usr/lib/freeradius/rlm_perl-2.1.1.so
 #   /usr/lib/freeradius/rlm_python-2.1.1.so
-#   /usr/lib/freeradius/rlm_sql_mysql-2.1.1.so
-#   /usr/lib/freeradius/rlm_sql_postgresql-2.1.1.so
-#   /usr/lib/freeradius/rlm_sql_sqlite-2.1.1.so
-#   /usr/lib/freeradius/rlm_sql_unixodbc-2.1.1.so
 #   /usr/lib/freeradius/rlm_unix-2.1.1.so
+# - After install/uninstall every module perform daemon restart
 #
 %include	/usr/lib/rpm/macros.perl
 #
@@ -25,7 +22,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.1
-Release:	0.10
+Release:	0.11
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -90,6 +87,38 @@ konfigurowalnego serwera RADIUS na licencji GPL. Ten jest podobny do
 Livingston 2.0 RADIUS server ale ma o wiele więcej funkcji i posiada
 większe możliwości konfigurowania.
 
+%package module-mysql
+Summary:	Mysql module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-mysql
+Mysql module for %{name}.
+
+%package module-unixodbc
+Summary:	odbcunix module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-unixodbc
+UnixODBC module for %{name}.
+
+%package module-postgresql
+Summary:	PostgreSQL module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-postgresql
+PostgreSQL module for %{name}.
+
+%package module-sqlite
+Summary:	Sqlite module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-sqlite
+Sqlite module for %{name}.
+
 %package mibs
 Summary:        MIB database for %{name}
 Summary(pl.UTF-8):      Baza danych MIB dla %{name}
@@ -101,7 +130,6 @@ MIB database for %{name}.
 
 %description mibs -l pl.UTF-8
 Baza danych MIB dla %{name}.
-
 
 %package libs
 Summary:	Freeradius libraries
@@ -171,7 +199,8 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/freeradius \
 	$RPM_BUILD_ROOT%{_libdir}/*.{a,la} \
 	$RPM_BUILD_ROOT%{_libdir}/freeradius/*.a \
 	$RPM_BUILD_ROOT%{_sbindir}/rc.* \
-	$RPM_BUILD_ROOT%{_sysconfdir}/*.pl
+	$RPM_BUILD_ROOT%{_sysconfdir}/*.pl \
+	$RPM_BUILD_ROOT%{_sysconfdir}/raddb/sql/oracle
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -211,21 +240,144 @@ fi
 %defattr(644,root,root,755)
 %doc doc/* scripts
 %dir %{_sysconfdir}/raddb
-%attr(771,root,radius) %dir %{_var}/log/freeradius
-%attr(771,root,radius) %dir %{_var}/log/freeradius/radacct
-%attr(771,root,radius) %dir %{_var}/log/archive/freeradius
-%attr(771,root,radius) %dir %{_var}/log/archive/freeradius/radacct
-%attr(775,root,radius) %dir /var/run/freeradius
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/*
+# To separate package:
+%exclude %{_sysconfdir}/raddb/sql/mysql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/*
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/*
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
 %attr(755,root,root) %{_bindir}/*
 %attr(755,root,root) %{_sbindir}/*
-%attr(755,root,root) %{_libdir}/freeradius/*.la
-%attr(755,root,root) %{_libdir}/freeradius/*.so
+%dir %{_libdir}/freeradius
+%attr(755,root,root) %{_libdir}/freeradius/rlm_acctlog*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_acctlog*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_acct_unique*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_acct_unique*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_always*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_always*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_checkval*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_checkval*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_copy_packet*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_copy_packet*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_counter*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_counter*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cram*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cram*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dbm*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dbm*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_detail*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_detail*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_digest*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_digest*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dynamic_clients*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dynamic_clients*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_eap*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_eap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_example*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_example*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_exec*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_exec*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expiration*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expiration*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expr*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expr*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_fastusers*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_fastusers*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_files*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_files*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ippool*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ippool*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_jradius*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_jradius*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ldap*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ldap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_linelog*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_linelog*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_logintime*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_logintime*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_mschap*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_mschap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_otp*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_otp*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pam*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pam*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pap*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_passwd*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_passwd*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_perl*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_perl*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_policy*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_policy*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_preprocess*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_preprocess*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_protocol_filter*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_protocol_filter*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_python*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_python*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlippool*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlippool*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_log*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_log*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unix*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unix*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_wimax*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_wimax*.la
 %{_datadir}/freeradius
 %{_mandir}/man?/*
+%attr(771,root,radius) %dir %{_var}/log/freeradius
+%attr(771,root,radius) %dir %{_var}/log/freeradius/radacct
+%attr(771,root,radius) %dir %{_var}/log/archive/freeradius
+%attr(771,root,radius) %dir %{_var}/log/archive/freeradius/radacct
+%attr(775,root,radius) %dir /var/run/freeradius
+
+%files module-mysql
+%defattr(644,root,root,755)
+%dir %{_sysconfdir}/raddb/sql/mysql
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/mysql/*
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_mysql*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_mysql*.so
+
+%files module-sqlite
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.la
+
+%files module-postgresql
+%defattr(644,root,root,755)
+%dir %{_sysconfdir}/raddb/sql/postgresql
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/postgresql/*
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_postgresql*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_postgresql*.la
+
+%files module-unixodbc
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_unixodbc*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_unixodbc*.la
 
 %files libs
 %defattr(644,root,root,755)
