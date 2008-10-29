@@ -243,6 +243,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/*
 # To separate package:
 %exclude %{_sysconfdir}/raddb/sql/mysql
+%exclude %{_sysconfdir}/raddb/sql/postgresql
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/*
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/*
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
