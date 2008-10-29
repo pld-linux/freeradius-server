@@ -1,8 +1,9 @@
 #
 # TODO:
-#	- Currently this package conflicts with freeradius - should we use Obsolete header ?
-#	- check log files permisions - should be writable by radius user/group
-#	(log files are created by server)
+# - check log files permisions - should be writable by radius user/group
+#   (log files are created by server)
+# - prepare to use with --as-needed
+# - ac/am regeneration doesn't work
 #
 %include	/usr/lib/rpm/macros.perl
 #
@@ -10,7 +11,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.1
-Release:	0.1
+Release:	0.9
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -59,6 +60,8 @@ Obsoletes:	freeradius < 2.0
 Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+%define         filterout_ld    -Wl,--as-needed
+
 %description
 The FreeRADIUS Server Project is an attempt to create a
 high-performance and highly configurable GPL'd RADIUS server. It is
@@ -79,14 +82,15 @@ większe możliwości konfigurowania.
 %patch3 -p1
 
 %build
-find -name 'configure.[ia][nc]' -type f | while read FILE; do
-    cd $(dirname "$FILE")
-    %{__libtoolize}
-    %{__aclocal} -I $OLDPWD
-    %{__autoconf}
-    [ -f config.h.in ] && %{__autoheader}
-    cd -
-done
+# Keep it for future when ac/am regeneration will be ok
+#find -name 'configure.[ia][nc]' -type f | while read FILE; do
+#    cd $(dirname "$FILE")
+#    %{__libtoolize}
+#    %{__aclocal} -I $OLDPWD
+#    %{__autoconf}
+#    [ -f config.h.in ] && %{__autoheader}
+#    cd -
+#done
 
 LIBS="-lgdbm" \
 %configure \
@@ -104,27 +108,22 @@ LIBS="-lgdbm" \
 
 %install
 rm -rf $RPM_BUILD_ROOT
+install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,pam.d} \
+	$RPM_BUILD_ROOT%{_var}/log/{,archive}/freeradius/radacct
 
 %{__make} -j1 install \
 	R=$RPM_BUILD_ROOT
 
-rm -rf $RPM_BUILD_ROOT/%{_docdir}/freeradius
-rm -rf $RPM_BUILD_ROOT/%{_libdir}/*.a
-rm -rf $RPM_BUILD_ROOT/%{_libdir}/*.la
-rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
-rm -rf $RPM_BUILD_ROOT/%{_sbindir}/rc.*
-rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/*.pl
-
-install -d		$RPM_BUILD_ROOT/etc/logrotate.d
 install %{SOURCE1}	$RPM_BUILD_ROOT/etc/logrotate.d/%{name}
-
-install -d		$RPM_BUILD_ROOT/etc/rc.d/init.d
 install %{SOURCE2}	$RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
-
-install -d		$RPM_BUILD_ROOT/etc/pam.d
 install %{SOURCE3}	$RPM_BUILD_ROOT/etc/pam.d/radius
 
-install -d $RPM_BUILD_ROOT%{_var}/log/{,archive}/freeradius/radacct
+# Cleanups:
+rm -rf $RPM_BUILD_ROOT%{_docdir}/freeradius \
+	$RPM_BUILD_ROOT%{_libdir}/*.{a,la} \
+	$RPM_BUILD_ROOT%{_libdir}/freeradius/*.a \
+	$RPM_BUILD_ROOT%{_sbindir}/rc.* \
+	$RPM_BUILD_ROOT%{_sysconfdir}/*.pl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
