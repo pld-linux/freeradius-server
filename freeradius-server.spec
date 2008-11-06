@@ -16,7 +16,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.1
-Release:	0.12
+Release:	0.13
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -153,6 +153,14 @@ Requires:	%{name} = %{version}-%{release}
 
 %description module-sqlite
 Sqlite module for %{name}.
+
+%package module-sql_firebird
+Summary:	SQL Firebird module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-sql_firebird
+SQL Firebird module for %{name}.
 
 %package module-unix
 Summary:	Unix module for %{name}
@@ -432,8 +440,6 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.so
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlippool*.so
@@ -505,6 +511,11 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.la
+
+%files module-sql_firebird
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.la
 
 %files module-unix
 %defattr(644,root,root,755)
