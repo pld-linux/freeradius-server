@@ -16,7 +16,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.1
-Release:	0.13
+Release:	0.14
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -292,7 +292,27 @@ if [ "$1" = "0" ]; then
 	%groupremove radius
 fi
 
-%post   libs -p /sbin/ldconfig                                                                                        
+%define module_scripts() \
+%post %1 \
+%service %{name} restart \
+\
+%postun %1 \
+%service %{name} restart
+
+%module_scripts module-krb5
+%module_scripts module-ldap
+%module_scripts module-mysql
+%module_scripts module-otp
+%module_scripts module-pam
+%module_scripts module-perl
+%module_scripts module-postgresql
+%module_scripts module-python
+%module_scripts module-sqlite
+%module_scripts module-sql_firebird
+%module_scripts module-unix
+%module_scripts module-unixodbc
+
+%post   libs -p /sbin/ldconfig
 %postun libs -p /sbin/ldconfig
 
 %files
