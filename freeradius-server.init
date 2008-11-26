@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# chkconfig:	345 88 10
+# chkconfig:	345 88 12
 # description:	Start/Stop the RADIUS server daemon
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,10 @@
 . /etc/rc.d/init.d/functions
 
 [ -f /etc/raddb/radiusd.conf ] || exit 0
+
+checkconfig() {
+	run_cmd "Checking RADIUS configuration " /usr/sbin/radiusd -C || exit 1
+}
 
 start() {
 	# Check if the service is already running?
@@ -58,10 +62,12 @@ case "$1" in
 	;;
   status)
 	status radiusd
+	checkconfig
 	exit $?
 	;;
   reload)
 	if [ -f /var/lock/subsys/freeradius ]; then
+		checkconfig
 		msg_reloading RADIUS
 		killproc /usr/sbin/radiusd -HUP
 		RETVAL=$?
@@ -71,15 +77,17 @@ case "$1" in
 	fi
 	;;
   restart|force-reload)
+  	checkconfig
 	stop
 	sleep 3
 	start
 	;;
   condrestart)
 	if [ -f /var/lock/subsys/freeradius ]; then
-		$0 stop
+		checkconfig
+		stop
 		sleep 3
-		$0 start
+		start
 		RETVAL=$?
 	fi
 	;;
