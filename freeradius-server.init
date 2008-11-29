@@ -65,7 +65,7 @@ case "$1" in
 	checkconfig
 	exit $?
 	;;
-  reload)
+  reload|force-reload)
 	if [ -f /var/lock/subsys/freeradius ]; then
 		checkconfig
 		msg_reloading RADIUS
@@ -76,23 +76,22 @@ case "$1" in
 		exit 7
 	fi
 	;;
-  restart|force-reload)
+  restart)
   	checkconfig
 	stop
 	sleep 3
 	start
 	;;
-  condrestart)
+  try-restart)
 	if [ -f /var/lock/subsys/freeradius ]; then
 		checkconfig
 		stop
 		sleep 3
 		start
-		RETVAL=$?
 	fi
 	;;
   *)
-	msg_usage "$0 {start|stop|restart|condrestart|reload|force-reload|status}"
+	msg_usage "$0 {start|stop|restart|try-restart|reload|force-reload|status}"
 	exit 3
 esac
 
