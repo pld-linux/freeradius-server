@@ -15,12 +15,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.1.1
-Release:	0.14
+Version:	2.1.2
+Release:	0.1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	4ccf748ef9851d90844d085647351ca4
+# Source0-md5:	5062bf0772305b9ad4b1d946ebfcb7c6
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -222,6 +222,9 @@ Header files and libraries.
 #    [ -f config.h.in ] && %{__autoheader}
 #    cd -
 #done
+%{__libtoolize}
+%{__aclocal} -I .
+%{__autoconf}
 
 LIBS="-lgdbm" \
 %configure \
@@ -292,6 +295,9 @@ if [ "$1" = "0" ]; then
 	%groupremove radius
 fi
 
+%post   libs -p /sbin/ldconfig
+%postun libs -p /sbin/ldconfig
+
 %define module_scripts() \
 %post %1 \
 %service %{name} restart \
@@ -312,12 +318,9 @@ fi
 %module_scripts module-unix
 %module_scripts module-unixodbc
 
-%post   libs -p /sbin/ldconfig
-%postun libs -p /sbin/ldconfig
-
 %files
 %defattr(644,root,root,755)
-%doc doc/* scripts
+%doc doc/* scripts raddb
 %dir %{_sysconfdir}/raddb
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/acct_users
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/attrs*
