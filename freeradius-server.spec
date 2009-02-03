@@ -215,18 +215,14 @@ Header files and libraries.
 %build
 # Keep it for future when ac/am regeneration will be ok
 #find -name 'configure.[ia][nc]' -type f | while read FILE; do
-#    cd $(dirname "$FILE")
-#    %{__libtoolize}
-#    %{__aclocal} -I $OLDPWD
-#    %{__autoconf}
-#    [ -f config.h.in ] && %{__autoheader}
-#    cd -
+#	cd $(dirname "$FILE")
+#	%{__libtoolize}
+#	%{__aclocal} -I $OLDPWD
+#	%{__autoconf}
+#	[ -f config.h.in ] && %{__autoheader}
+#	cd -
 #done
-%{__libtoolize}
-%{__aclocal} -I .
-%{__autoconf}
 
-LIBS="-lgdbm" \
 %configure \
 	--enable-strict-dependencies \
 	--with-experimental-modules \
