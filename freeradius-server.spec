@@ -14,6 +14,7 @@
 %bcond_without	ldap		# without rlm_ldap extension module
 %bcond_without	firebird	# without rlm_sql_firebird extension module
 %bcond_without	eap_ikev2	# without rlm_eap_ikev2 extension module
+%bcond_without	kerberos5	# without rlm_krb5 extension module
 #
 %include	/usr/lib/rpm/macros.perl
 #
@@ -39,6 +40,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	cyrus-sasl-devel
 BuildRequires:	gdbm-devel
+%{?with_kerberos5:BuildRequires:	krb5-devel}
 %{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel}
 BuildRequires:	libtool
 BuildRequires:	net-snmp-utils
@@ -241,6 +243,7 @@ Header files and libraries.
 	%{!?with_firebird:--without-rlm_sql_firebird} \
 	%{!?with_ldap:--without-rlm_ldap} \
 	%{!?with_eap_ikev2:--without-rlm_eap_ikev2} \
+	%{!?with_kerberos5:--without-rlm_krb5} \
 
 %{make} -j1
 
@@ -490,11 +493,13 @@ fi
 %attr(771,root,radius) %dir %{_var}/log/archive/freeradius/radacct
 %attr(775,root,radius) %dir /var/run/freeradius
 
+%if %{with kerberos5}
 %files module-krb5
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/krb5
 %attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.la
+%endif
 
 %if %{with ldap}
 %files module-ldap
