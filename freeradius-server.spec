@@ -10,6 +10,11 @@
 # - After install/uninstall every module perform daemon restart
 # - what about links in /usr/lib/freeradius/ - required? *.la?
 #
+# Conditional build:
+%bcond_without	ldap		# without rlm_ldap extension module
+%bcond_without	firebird	# without rlm_sql_firebird extension module
+%bcond_without	eap_ikev2	# without rlm_eap_ikev2 extension module
+#
 %include	/usr/lib/rpm/macros.perl
 #
 Summary:	High-performance and highly configurable RADIUS server
@@ -29,16 +34,16 @@ Patch1:		%{name}-libdir.patch
 Patch2:		%{name}-makefile.patch
 Patch3:		%{name}-rundir.patch
 URL:		http://www.freeradius.org/
-BuildRequires:	Firebird-devel
+%{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	cyrus-sasl-devel
 BuildRequires:	gdbm-devel
-BuildRequires:	libeap-ikev2-devel
+%{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel}
 BuildRequires:	libtool
 BuildRequires:	net-snmp-utils
 BuildRequires:	mysql-devel
-BuildRequires:	openldap-devel
+%{?with_ldap:BuildRequires:	openldap-devel}
 BuildRequires:	openssl-devel
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
@@ -232,7 +237,10 @@ Header files and libraries.
 	--without-rlm_opendirectory \
 	--without-rlm_sql_db2 \
 	--without-rlm_sql_iodbc \
-	--without-rlm_sql_oracle
+	--without-rlm_sql_oracle \
+	%{!?with_firebird:--without-rlm_sql_firebird} \
+	%{!?with_ldap:--without-rlm_ldap} \
+	%{!?with_eap_ikev2:--without-rlm_eap_ikev2} \
 
 %{make} -j1
 
@@ -338,6 +346,9 @@ fi
 %dir %{_sysconfdir}/raddb/certs
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/certs/*.cnf
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/certs/xpextensions
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/certs/Makefile
+%doc %{_sysconfdir}/raddb/certs/README
+%attr(755,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/certs/bootstrap
 %dir %{_sysconfdir}/raddb/modules
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/acct_unique
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/always
@@ -370,7 +381,9 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/radutmp
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/realm
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/smbpasswd
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/smsotp
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sql_log
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sqlcounter_expire_on_login
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sradutmp
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/wimax
 %dir %{_sysconfdir}/raddb/sites-available
@@ -453,6 +466,8 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.la
@@ -481,12 +496,14 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.la
 
+%if %{with ldap}
 %files module-ldap
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/ldap.attrmap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/ldap
 %attr(755,root,root) %{_libdir}/freeradius/rlm_ldap*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_ldap*.la
+%endif
 
 %files module-mysql
 %defattr(644,root,root,755)
@@ -497,7 +514,7 @@ fi
 
 %files module-otp
 %defattr(644,root,root,755)
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/otp.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/otp
 %attr(755,root,root) %{_libdir}/freeradius/rlm_otp*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_otp*.la
 
@@ -511,6 +528,7 @@ fi
 %files module-perl
 %defattr(644,root,root,755)
 %attr(755,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/example.pl
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/perl
 %attr(755,root,root) %{_libdir}/freeradius/rlm_perl*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_perl*.la
 
@@ -531,10 +549,12 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.la
 
+%if %{with firebird}
 %files module-sql_firebird
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.la
+%endif
 
 %files module-unix
 %defattr(644,root,root,755)
