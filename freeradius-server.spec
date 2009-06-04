@@ -1,15 +1,3 @@
-#
-# TODO:
-# - check log files permisions - should be writable by radius user/group
-#   (log files are created by server)
-# - prepare to use with --as-needed
-# - ac/am regeneration doesn't work
-# - move plugins into separate packages:
-#   /usr/sbin/radsniff: libpcap
-#   /usr/lib/freeradius/rlm_eap_ikev2-2.1.1.so: libeap-ikev2
-# - After install/uninstall every module perform daemon restart
-# - what about links in /usr/lib/freeradius/ - required? *.la?
-#
 # Conditional build:
 %bcond_without	ldap		# without rlm_ldap extension module
 %bcond_without	firebird	# without rlm_sql_firebird extension module
