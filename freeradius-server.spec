@@ -10,7 +10,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.6
-Release:	1
+Release:	2
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -28,7 +28,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	cyrus-sasl-devel
 BuildRequires:	gdbm-devel
-%{?with_kerberos5:BuildRequires:	krb5-devel}
+%{?with_kerberos5:BuildRequires:	heimdal-devel}
 %{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel}
 BuildRequires:	libtool
 BuildRequires:	net-snmp-utils
