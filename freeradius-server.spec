@@ -10,7 +10,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.6
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -40,6 +40,7 @@ BuildRequires:	perl-devel
 BuildRequires:	postgresql-devel
 BuildRequires:	python-devel
 BuildRequires:	rpmbuild(macros) >= 1.268
+BuildRequires:	ruby-devel >= 1.8
 BuildRequires:	sqlite3-devel
 BuildRequires:	unixODBC-devel
 Requires(post,preun):	/sbin/chkconfig
@@ -232,7 +233,8 @@ Header files and libraries.
 	%{!?with_firebird:--without-rlm_sql_firebird} \
 	%{!?with_ldap:--without-rlm_ldap} \
 	%{!?with_eap_ikev2:--without-rlm_eap_ikev2} \
-	%{!?with_kerberos5:--without-rlm_krb5} \
+	%{?with_kerberos5:--enable-heimdal-krb5} \
+	%{!?with_kerberos5:--without-rlm_krb5}
 
 %{make} -j1
 
