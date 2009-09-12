@@ -10,7 +10,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.6
-Release:	4
+Release:	5
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -51,8 +51,6 @@ Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(pre):	/usr/sbin/usermod
-# Should go to perl subpackage?
-Requires:	perl(DynaLoader) = %(%{__perl} -MDynaLoader -e 'print DynaLoader->VERSION')
 Requires:	rc-scripts
 Requires:	%{name}-libs = %{version}-%{release}
 Provides:	group(radius)
