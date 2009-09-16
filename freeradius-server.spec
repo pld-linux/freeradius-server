@@ -9,12 +9,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.1.6
-Release:	5
+Version:	2.1.7
+Release:	1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	645ac631505cde46e93c47e273bdec19
+# Source0-md5:	b8df6cf0c3df1dded205ad5f954feb78
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -31,8 +31,8 @@ BuildRequires:	gdbm-devel
 %{?with_kerberos5:BuildRequires:	heimdal-devel}
 %{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel}
 BuildRequires:	libtool
-BuildRequires:	net-snmp-utils
 BuildRequires:	mysql-devel
+BuildRequires:	net-snmp-utils
 %{?with_ldap:BuildRequires:	openldap-devel}
 BuildRequires:	openssl-devel
 BuildRequires:	pam-devel
@@ -51,11 +51,11 @@ Requires(pre):	/usr/bin/getgid
 Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(pre):	/usr/sbin/usermod
-Requires:	rc-scripts
 Requires:	%{name}-libs = %{version}-%{release}
+Requires:	rc-scripts
+Provides:	freeradius = %{version}-%{release}
 Provides:	group(radius)
 Provides:	user(radius)
-Provides:	freeradius = %{version}-%{release}
 Obsoletes:	cistron-radius
 Obsoletes:	freeradius < 2.0
 Conflicts:	logrotate < 3.7-4
@@ -173,9 +173,9 @@ Requires:	%{name} = %{version}-%{release}
 UnixODBC module for %{name}.
 
 %package mibs
-Summary:        MIB database for %{name}
-Summary(pl.UTF-8):      Baza danych MIB dla %{name}
-Group:          Applications/System
+Summary:	MIB database for %{name}
+Summary(pl.UTF-8):	Baza danych MIB dla %{name}
+Group:		Applications/System
 Suggests:	libsmi
 
 %description mibs
@@ -186,14 +186,14 @@ Baza danych MIB dla %{name}.
 
 %package libs
 Summary:	Freeradius libraries
-Group:          Libraries
+Group:		Libraries
 
 %description libs
 Freeradius libraries.
 
 %package devel
 Summary:	Header files and devel library
-Group:          Development/Libraries
+Group:		Development/Libraries
 Requires:	%{name}-libs = %{version}-%{release}
 
 %description devel
@@ -349,6 +349,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/chap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/checkval
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/counter
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/cui
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail.example.com
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail.log
@@ -385,6 +386,8 @@ fi
 %dir %{_sysconfdir}/raddb/sql
 %dir %{_sysconfdir}/raddb/sql/mssql
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/mssql/*
+%dir %{_sysconfdir}/raddb/sql/ndb
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/ndb/*
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/*
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
 %attr(755,root,root) %{_bindir}/*
@@ -456,6 +459,8 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.so
