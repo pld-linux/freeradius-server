@@ -62,7 +62,7 @@ Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		mibdir	%{_datadir}/snmp/mibs
-%define         filterout_ld    -Wl,--as-needed
+%define		filterout_ld	-Wl,--as-needed
 
 %description
 The FreeRADIUS Server Project is an attempt to create a
@@ -315,8 +315,7 @@ fi
 %module_scripts module-unixodbc
 
 %files
-%defattr(644,root,root,755)
-%doc doc/* scripts raddb
+%defattr(640,root,radius,750)
 %dir %{_sysconfdir}/raddb
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/acct_users
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/attrs*
@@ -388,6 +387,8 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/mssql/*
 %dir %{_sysconfdir}/raddb/sql/ndb
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sql/ndb/*
+%defattr(644,root,root,755)
+%doc doc/* scripts raddb
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/*
 %attr(754,root,root) /etc/rc.d/init.d/%{name}
 %attr(755,root,root) %{_bindir}/*
