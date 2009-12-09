@@ -40,6 +40,7 @@ BuildRequires:	pam-devel
 BuildRequires:	perl-devel
 BuildRequires:	postgresql-devel
 BuildRequires:	python-devel
+BuildRequires:	rpm-perlprov
 BuildRequires:	rpmbuild(macros) >= 1.268
 BuildRequires:	ruby-devel >= 1.8
 BuildRequires:	sqlite3-devel
