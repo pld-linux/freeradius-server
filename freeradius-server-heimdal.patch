@@ -1,0 +1,11 @@
+--- freeradius-server-2.1.7/src/modules/rlm_krb5/Makefile.in~	2009-09-14 16:43:29.000000000 +0200
++++ freeradius-server-2.1.7/src/modules/rlm_krb5/Makefile.in	2009-12-09 15:08:03.257911929 +0100
+@@ -6,7 +6,7 @@
+ SRCS       = rlm_krb5.c
+ HEADERS    =
+ RLM_LIBS   = @krb5_ldflags@
+-RLM_CFLAGS = @krb5_cflags@ -I/usr/include/et -DKRB5_DEPRECATED
++RLM_CFLAGS = @krb5_cflags@ -I/usr/include/et
+ 
+ include ../rules.mak
+ 
