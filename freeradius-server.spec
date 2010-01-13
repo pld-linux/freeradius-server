@@ -10,7 +10,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.7
-Release:	4
+Release:	5
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -63,7 +63,7 @@ Obsoletes:	freeradius < 2.0
 Conflicts:	logrotate < 3.7-4
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%define		mibdir	%{_datadir}/snmp/mibs
+%define		mibdir			%{_datadir}/mibs
 %define		filterout_ld	-Wl,--as-needed
 
 %description
@@ -174,16 +174,18 @@ Requires:	%{name} = %{version}-%{release}
 %description module-unixodbc
 UnixODBC module for %{name}.
 
-%package mibs
+%package -n mibs-%{name}
 Summary:	MIB database for %{name}
 Summary(pl.UTF-8):	Baza danych MIB dla %{name}
 Group:		Applications/System
+Requires:	mibs-dirs
 Suggests:	libsmi
+Obsoletes:	freeradius-server-mibs
 
-%description mibs
+%description -n mibs-%{name}
 MIB database for %{name}.
 
-%description mibs -l pl.UTF-8
+%description -n mibs-%{name} -l pl.UTF-8
 Baza danych MIB dla %{name}.
 
 %package libs
@@ -582,7 +584,7 @@ fi
 %{_libdir}/libfreeradius-eap.so
 %{_libdir}/libfreeradius-radius.so
 
-%files mibs
+%files -n mibs-%{name}
 %defattr(644,root,root,755)
 %doc mibs/*.chart
 %{mibdir}/*.*
