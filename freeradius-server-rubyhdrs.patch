@@ -8,7 +8,7 @@
 +		RB_INC_DIR=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('rubyhdrdir')"`
  		RB_CFLAGS=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('CFLAGS')"`
  		RB_ARCH_DIR=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('archdir')"`
-+		RB_ARCH_INC_DIR=`${RUBYBIN} -e -r rbconfig 'puts RbConfig.expand("$(rubyhdrdir)/$(arch)")'`
++		RB_ARCH_INC_DIR=`${RUBYBIN} -r rbconfig -e 'puts RbConfig.expand("$(rubyhdrdir)/$(arch)")'`
  
  		old_CFLAGS=$CFLAGS
 -		CFLAGS="$CFLAGS $RB_CFLAGS -I${RB_ARCH_DIR} -I${RB_INC_DIR}"
