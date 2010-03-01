@@ -16,3 +16,23 @@
  #		smart_try_dir=$RB_INC_DIR
  		FR_SMART_CHECK_INCLUDE(ruby.h)
  		if test "x$ac_cv_header_ruby_h" != "xyes"; then
+--- freeradius-server-2.1.7/src/modules/rlm_ruby/rlm_ruby.c~	2009-09-14 16:43:29.000000000 +0200
++++ freeradius-server-2.1.7/src/modules/rlm_ruby/rlm_ruby.c	2010-03-01 15:21:45.111123747 +0100
+@@ -113,7 +113,7 @@
+     }
+ 
+     /* Get the array size. */
+-    outertuplesize = RARRAY(rb_value)->len;
++    outertuplesize = RARRAY_LEN(rb_value);
+ 
+     for (i = 0; i < outertuplesize; i++) {
+         VALUE pTupleElement = rb_ary_entry(rb_value, i);
+@@ -124,7 +124,7 @@
+             /* Check if it's a pair */
+             int tuplesize;
+ 
+-            if ((tuplesize = RARRAY(pTupleElement)->len) != 2) {
++            if ((tuplesize = RARRAY_LEN(pTupleElement)) != 2) {
+                 radlog(L_ERR, "%s: tuple element %d is a tuple "
+                         " of size %d. must be 2\n", function_name,
+                         i, tuplesize);
