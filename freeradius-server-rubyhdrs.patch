@@ -1,6 +1,6 @@
 --- freeradius-server-2.1.7/src/modules/rlm_ruby/configure.in~	2009-09-14 16:43:29.000000000 +0200
 +++ freeradius-server-2.1.7/src/modules/rlm_ruby/configure.in	2010-03-01 13:53:59.571124248 +0100
-@@ -57,7 +57,7 @@
+@@ -57,12 +57,13 @@
  #		RB_LIB_DIR=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('libdir')"`
  #		RB_EXTRA_LIBS=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('LIBS')"`
  		RB_LIBS=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('LIBRUBYARG_SHARED')"`
@@ -8,4 +8,11 @@
 +		RB_INC_DIR=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('rubyhdrdir')"`
  		RB_CFLAGS=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('CFLAGS')"`
  		RB_ARCH_DIR=`${RUBYBIN} -e "require 'rbconfig'; puts Config::CONFIG.fetch('archdir')"`
++		RB_ARCH_INC_DIR=`${RUBYBIN} -e -r rbconfig 'puts RbConfig.expand("$(rubyhdrdir)/$(arch)")'`
  
+ 		old_CFLAGS=$CFLAGS
+-		CFLAGS="$CFLAGS $RB_CFLAGS -I${RB_ARCH_DIR} -I${RB_INC_DIR}"
++		CFLAGS="$CFLAGS $RB_CFLAGS -I${RB_ARCH_INC_DIR} -I${RB_INC_DIR}"
+ #		smart_try_dir=$RB_INC_DIR
+ 		FR_SMART_CHECK_INCLUDE(ruby.h)
+ 		if test "x$ac_cv_header_ruby_h" != "xyes"; then
