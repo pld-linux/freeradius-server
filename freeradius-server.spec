@@ -10,7 +10,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.7
-Release:	6
+Release:	7
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -23,6 +23,7 @@ Patch1:		%{name}-libdir.patch
 Patch2:		%{name}-makefile.patch
 Patch3:		%{name}-rundir.patch
 Patch4:		%{name}-heimdal.patch
+Patch5:		%{name}-rubyhdrs.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -210,17 +211,18 @@ Header files and libraries.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 # Keep it for future when ac/am regeneration will be ok
-#find -name 'configure.[ia][nc]' -type f | while read FILE; do
-#	cd $(dirname "$FILE")
-#	%{__libtoolize}
-#	%{__aclocal} -I $OLDPWD
-#	%{__autoconf}
-#	[ -f config.h.in ] && %{__autoheader}
-#	cd -
-#done
+find -name 'configure.[ia][nc]' -type f | while read FILE; do
+	cd $(dirname "$FILE")
+	%{__libtoolize}
+	%{__aclocal} -I $OLDPWD
+	%{__autoconf}
+	[ -f config.h.in ] && %{__autoheader}
+	cd -
+done
 
 %configure \
 	--enable-strict-dependencies \
