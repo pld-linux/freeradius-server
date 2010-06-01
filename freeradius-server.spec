@@ -211,7 +211,9 @@ Header files and libraries.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%if "%{pld_release}" != "ti"
 %patch5 -p1
+%endif
 
 %build
 # Keep it for future when ac/am regeneration will be ok
