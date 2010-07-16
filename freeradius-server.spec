@@ -55,7 +55,7 @@ Requires(pre):	/usr/sbin/groupadd
 Requires(pre):	/usr/sbin/useradd
 Requires(pre):	/usr/sbin/usermod
 Requires:	%{name}-libs = %{version}-%{release}
-Requires:	openssl
+Requires:	openssl-tools
 Requires:	rc-scripts
 Provides:	freeradius = %{version}-%{release}
 Provides:	group(radius)
