@@ -24,7 +24,6 @@ Patch2:		%{name}-makefile.patch
 Patch3:		%{name}-rundir.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
-Patch6:		%{name}-ruby.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -214,7 +213,6 @@ Header files and libraries.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
 
 %build
 # Keep it for future when ac/am regeneration will be ok
