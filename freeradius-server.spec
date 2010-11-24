@@ -9,12 +9,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.1.9
-Release:	3
+Version:	2.1.10
+Release:	1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	5e16a0869acdf448b191c7e30f6507d8
+# Source0-md5:	8ea2bd39460a06212decf2c14fdf3fb8
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -24,6 +24,7 @@ Patch2:		%{name}-makefile.patch
 Patch3:		%{name}-rundir.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
+Patch6:		%{name}-ruby.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -212,9 +213,8 @@ Header files and libraries.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%if "%{pld_release}" != "ti"
 %patch5 -p1
-%endif
+%patch6 -p1
 
 %build
 # Keep it for future when ac/am regeneration will be ok
@@ -231,6 +231,7 @@ done
 	--enable-strict-dependencies \
 	--with-experimental-modules \
 	--with-logdir=%{_var}/log/freeradius \
+	--with-system-libltdl \
 	--with-system-libtool \
 	--with-udpfromto \
 	--without-rlm_eap_tnc \
@@ -579,8 +580,8 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.?.so
-%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.?.so
+%attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.??.so
+%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.??.so
 %dir %{_libdir}/freeradius
 
 %files devel
