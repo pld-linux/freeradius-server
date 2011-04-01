@@ -3,6 +3,7 @@
 %bcond_without	firebird	# without rlm_sql_firebird extension module
 %bcond_without	eap_ikev2	# without rlm_eap_ikev2 extension module
 %bcond_without	kerberos5	# without rlm_krb5 extension module
+%bcond_without	ruby		# without rlm_ruby extension module
 %bcond_with		failed_calls_acc # with failed calls accounting support
 #
 %include	/usr/lib/rpm/macros.perl
@@ -46,7 +47,7 @@ BuildRequires:	postgresql-devel
 BuildRequires:	python-devel
 BuildRequires:	rpm-perlprov
 BuildRequires:	rpmbuild(macros) >= 1.268
-BuildRequires:	ruby-devel >= 1.8
+%{?with_ruby:BuildRequires:	ruby-devel >= 1.8}
 BuildRequires:	sqlite3-devel
 BuildRequires:	unixODBC-devel
 Requires(post,preun):	/sbin/chkconfig
@@ -147,6 +148,14 @@ Requires:	%{name} = %{version}-%{release}
 %description module-python
 Python module for %{name}.
 
+%package module-ruby
+Summary:	Ruby module for %{name}
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-ruby
+Ruby module for %{name}.
+
 %package module-sqlite
 Summary:	Sqlite module for %{name}
 Group:		Networking/Daemons/Radius
@@ -245,7 +254,8 @@ done
 	%{!?with_ldap:--without-rlm_ldap} \
 	%{!?with_eap_ikev2:--without-rlm_eap_ikev2} \
 	%{?with_kerberos5:--enable-heimdal-krb5} \
-	%{!?with_kerberos5:--without-rlm_krb5}
+	%{!?with_kerberos5:--without-rlm_krb5} \
+	%{!?with_ruby:--without-rlm_ruby}
 
 %{make} -j1
 
@@ -322,6 +332,7 @@ fi
 %module_scripts module-perl
 %module_scripts module-postgresql
 %module_scripts module-python
+%module_scripts module-ruby
 %module_scripts module-sqlite
 %module_scripts module-sql_firebird
 %module_scripts module-unix
@@ -473,8 +484,6 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.so
@@ -556,6 +565,13 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/freeradius/rlm_python*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_python*.la
+
+%if %{with ruby}
+%files module-ruby
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.la
+%endif
 
 %files module-sqlite
 %defattr(644,root,root,755)
