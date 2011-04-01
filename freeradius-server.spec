@@ -3,6 +3,7 @@
 %bcond_without	firebird	# without rlm_sql_firebird extension module
 %bcond_without	eap_ikev2	# without rlm_eap_ikev2 extension module
 %bcond_without	kerberos5	# without rlm_krb5 extension module
+%bcond_with		failed_calls_acc # with failed calls accounting support
 #
 %include	/usr/lib/rpm/macros.perl
 #
@@ -24,6 +25,8 @@ Patch2:		%{name}-makefile.patch
 Patch3:		%{name}-rundir.patch
 Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
+# Patch taken from http://download.ag-projects.com/CDRTool/contrib/freeradius-brandinger/
+Patch6:		failed_calls_accounting.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -213,6 +216,7 @@ Header files and libraries.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%{?with_failed_calls_acc:%patch6 -p0}
 
 %build
 # Keep it for future when ac/am regeneration will be ok
