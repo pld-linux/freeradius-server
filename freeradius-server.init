@@ -62,8 +62,9 @@ case "$1" in
 	;;
   status)
 	status radiusd
+	retvar=$?
 	checkconfig
-	exit $?
+	exit $retvar
 	;;
   reload|force-reload)
 	if [ -f /var/lock/subsys/freeradius ]; then
