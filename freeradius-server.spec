@@ -1,3 +1,8 @@
+#
+# TODO:
+#   - build and package Redis module, requires hiredis library to be packaged
+#     first (https://github.com/antirez/hiredis)
+#
 # Conditional build:
 %bcond_without	ldap		# without rlm_ldap extension module
 %bcond_without	firebird	# without rlm_sql_firebird extension module
@@ -11,12 +16,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.1.10
-Release:	3
+Version:	2.1.12
+Release:	1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	8ea2bd39460a06212decf2c14fdf3fb8
+# Source0-md5:	862d3a2c11011e61890ba84fa636ed8c
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -246,6 +251,8 @@ done
 	--with-system-libtool \
 	--with-udpfromto \
 	--without-rlm_eap_tnc \
+	--without-rlm_redis \
+	--without-rlm_rediswho \
 	--without-rlm_opendirectory \
 	--without-rlm_sql_db2 \
 	--without-rlm_sql_iodbc \
@@ -396,8 +403,10 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/preprocess
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/radutmp
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/realm
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/replicate
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/smbpasswd
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/smsotp
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/soh
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sql_log
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sqlcounter_expire_on_login
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/sradutmp
@@ -428,6 +437,8 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_caching*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_caching*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_checkval*.so
@@ -484,10 +495,14 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_replicate*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_replicate*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sim_files*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_soh*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_soh*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql-*.la
