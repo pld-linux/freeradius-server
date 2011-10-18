@@ -13,14 +13,14 @@ diff -urN freeradius-server-2.0.3.orig/raddb/radiusd.conf.in freeradius-server-2
 diff -urN freeradius-server-2.0.3.orig/src/main/mainconfig.c freeradius-server-2.0.3/src/main/mainconfig.c
 --- freeradius-server-2.0.3.orig/src/main/mainconfig.c	2008-03-06 11:28:36.000000000 +0100
 +++ freeradius-server-2.0.3/src/main/mainconfig.c	2008-04-09 17:00:51.000000000 +0200
-@@ -171,7 +171,7 @@
- 	{ "prefix",             PW_TYPE_STRING_PTR, 0, &prefix,            "/usr/local"},
- 	{ "localstatedir",      PW_TYPE_STRING_PTR, 0, &localstatedir,     "${prefix}/var"},
+@@ -219,7 +219,7 @@
+ 	{ "sbindir",            PW_TYPE_STRING_PTR, 0, &sbindir,            "${prefix}/sbin"},
  	{ "logdir",             PW_TYPE_STRING_PTR, 0, &radlog_dir,        "${localstatedir}/log"},
+ 	{ "run_dir",            PW_TYPE_STRING_PTR, 0, &run_dir,           "${localstatedir}/run/${name}"},
 -	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib"},
 +	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib/freeradius"},
  	{ "radacctdir",         PW_TYPE_STRING_PTR, 0, &radacct_dir,       "${logdir}/radacct" },
- 	{ "hostname_lookups",   PW_TYPE_BOOLEAN,    0, &librad_dodns,      "no" },
+ 	{ "hostname_lookups",   PW_TYPE_BOOLEAN,    0, &fr_dns_lookups,      "no" },
  	{ "max_request_time", PW_TYPE_INTEGER, 0, &mainconfig.max_request_time, Stringify(MAX_REQUEST_TIME) },
 diff -urN freeradius-server-2.0.3.orig/src/modules/rlm_sql/drivers/rules.mak freeradius-server-2.0.3/src/modules/rlm_sql/drivers/rules.mak
 --- freeradius-server-2.0.3.orig/src/modules/rlm_sql/drivers/rules.mak	2007-06-28 07:11:36.000000000 +0200
