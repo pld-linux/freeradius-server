@@ -17,7 +17,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.12
-Release:	1
+Release:	1.5
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -33,6 +33,8 @@ Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
 # Patch taken from http://download.ag-projects.com/CDRTool/contrib/freeradius-brandinger/
 Patch6:		failed_calls_accounting.patch
+# http://eduroam.pl/Dokumentacja/cui-fr-2.1.12.patch
+Patch7:		cui-fr-2.1.12.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -231,6 +233,7 @@ Header files and libraries.
 %patch4 -p1
 %patch5 -p1
 %{?with_failed_calls_acc:%patch6 -p0}
+%patch7 -p1
 
 %build
 # Keep it for future when ac/am regeneration will be ok

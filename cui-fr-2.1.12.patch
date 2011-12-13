@@ -1,0 +1,397 @@
+diff -Naur freeradius-server-2.1.12-orig/raddb/modules/cui freeradius-server-2.1.12-cui//raddb/modules/cui
+--- freeradius-server-2.1.12-orig/raddb/modules/cui	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/modules/cui	2011-11-30 10:43:51.074077716 +0100
+@@ -21,5 +21,6 @@
+ 	connect_failure_retry_delay = 60
+ 	cui_table = "cui"
+ 	sql_user_name = "%{User-Name}"
+-#$INCLUDE sql/${database}/cui.conf
++	sp_operator_name = "your.registered.domain.name"
++	#$INCLUDE sql/${database}/cui.conf
+ }
+diff -Naur freeradius-server-2.1.12-orig/raddb/policy.conf freeradius-server-2.1.12-cui//raddb/policy.conf
+--- freeradius-server-2.1.12-orig/raddb/policy.conf	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/policy.conf	2011-12-07 11:19:42.500158102 +0100
+@@ -65,75 +65,79 @@
+ 	}
+ 
+ 	#
+-	#  Force some sanity on User-Name.  This helps to avoid issues
+-	#  issues where the back-end database is "forgiving" about
+-	#  what constitutes a user name.
+-	#
+-	filter_username {
+-		# spaces at the start: reject
+-		if (User-Name =~ /^ /) {
+-			reject
+-		}
+-
+-		# spaces at the end: reject
+-		if (User-Name =~ / $$/) {
+-			reject
+-		}
+-
+-		# Mixed case: reject
+-		if (User-Name != "%{tolower:%{User-Name}}") {
+-			reject
++	#	The following policies are for the Operator-Name handling
++	#	(RFC5580) 
++	#
++	operator_name {
++		if (Packet-Type == Access-Request) {
++			update  request {
++				Operator-Name := "%{config:sp_operator_name}"
++				Chargeable-User-Identity = '\\000'
++			}
+ 		}
+ 	}
+-
+-
+-	#	
+-	#  The following policies are for the Chargeable-User-Identity
+-	#  (CUI) configuration.
++	
++	#
++	#	The following policies are for the Chargeable-User-Identity
++	#	(CUI) configuration. See doc/cui_howto.txt for more information.
+ 	#
+ 
+ 	#
+-	#  The client indicates it can do CUI by sending a CUI attribute	
+-	#  containing one zero byte
++	#	The client requests the CUI by sending a CUI attribute
++	#	containing one zero byte.
+ 	#
+-	cui_authorize {
+-		update request {
+-			Chargeable-User-Identity:='\\000'
++	cui_pre-proxy {
++		if (Packet-Type == Access-Request) {
++			update proxy-request {
++				Chargeable-User-Identity = '\\000'
++			}
+ 		}
+ 	}
+ 
+ 	#
+-	#  Add a CUI attribute based on the User-Name, and a secret key
+-	#  known only to this server.
++	#	Add a CUI attribute based on the User-Name, and a secret key
++	#	known only to this server.
+ 	#
+ 	cui_postauth {
+-		if (FreeRadius-Proxied-To == 127.0.0.1) {
+-			if (outer.request:Chargeable-User-Identity) {
+-				update outer.reply {
+-					Chargeable-User-Identity:="%{md5:%{config:cui_hash_key}%{User-Name}}"
++		if (FreeRadius-Proxied-To == "127.0.0.1") {
++			#
++			#  Add the CUI to Access-Accept, but only if the CUI
++			#  was set in the request.
++			#
++			if (outer.request:Chargeable-User-Identity && (outer.request:Operator-Name) || !("%{config:cui_require_operator_name}") ) {
++				update reply {
++				Chargeable-User-Identity := "%{md5:%{config:cui_hash_key}%{request:User-Name}%{%{outer.request:Operator-Name}:-}}"
+ 				}
+ 			}
+ 		}
+ 		else {
+-			if (Chargeable-User-Identity) {
++			#
++			#  If the CUI was set in the request and the CUI reply
++			#  is not already set by inner auth, add it to
++			#  Access-Accept
++			#
++			if (!("%{control:Proxy-To-Realm}") && \
++				(Chargeable-User-Identity) && \
++				!(reply:Chargeable-User-Identity) && \
++				( (Operator-Name) || ! ("%{config:cui_require_operator_name}") ) ) {
+ 				update reply {
+-					Chargeable-User-Identity="%{md5:%{config:cui_hash_key}%{User-Name}}"
++					Chargeable-User-Identity = "%{md5:%{config:cui_hash_key}%{request:User-Name}%{%{Operator-Name}:-}}"
+ 				}
+ 			}
+ 		}
+ 	}
+ 
+ 	#
+-	#  If there is a CUI attribute in the reply, add it to the DB.
++	#	If there is a CUI attribute in the reply, add it to the DB.
+ 	#
+ 	cui_updatedb {
+-		if (reply:Chargeable-User-Identity) {
++		if ("%{reply:Chargeable-User-Identity}") {
+ 			cui
+ 		}
+ 	}
+ 
+ 	#
+-	#  If we had stored a CUI for the User, add it to the request.
++	#	If we had stored a CUI for the User, add it to the request.
+ 	#
+ 	cui_accounting {
+ 		#
+@@ -142,56 +146,19 @@
+ 		#
+ 		if (!Chargeable-User-Identity) {
+ 			update control {
+-				Chargable-User-Identity := "%{cui: SELECT cui FROM cui WHERE clientipaddress = '%{Client-IP-Address}' AND callingstationid = '%{Calling-Station-Id}' AND username = '%{User-Name}'}"
++				Chargeable-User-Identity = "%{cui: SELECT cui FROM cui WHERE clientipaddress = '%{Client-IP-Address}' AND callingstationid = '%{Calling-Station-Id}' AND username = '%{User-Name}'}"
+ 			}
+ 		}
+-
+ 		#
+-		#  If it exists now, then write out when we last saw
+-		#  this CUI.
++		#  If it exists now, then update request and write out 
++		#  when we last saw this CUI.
+ 		#
+-		if (Chargeable-User-Identity && (Chargeable-User-Identity != "")) {
+-			cui
+-		}
+-	}
+-
+-	#
+-	#  Normalize the MAC Addresses in the Calling/Called-Station-Id
+-	#
+-	mac-addr = ([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})
+-
+-	#  Add "rewrite.called_station_id" in the "authorize" and "preacct"
+-	#  sections.
+-	rewrite.called_station_id {
+-		if((Called-Station-Id) && "%{Called-Station-Id}" =~ /^%{config:policy.mac-addr}(:(.+))?$/i) {
+-			update request {
+-				Called-Station-Id := "%{tolower:%{1}-%{2}-%{3}-%{4}-%{5}-%{6}}"
+-			}
+-
+-			# SSID component?
+-			if ("%{8}") {
+-				update request {
+-					Called-Station-Id := "%{Called-Station-Id}:%{8}"
+-				}
+-			}
+-			updated
+-		}
+-		else {
+-			noop
+-		}
+-	}
+-
+-	#  Add "rewrite.calling_station_id" in the "authorize" and "preacct"
+-	#  sections.
+-	rewrite.calling_station_id {
+-		if((Calling-Station-Id) && "%{Calling-Station-Id}" =~ /^%{config:policy.mac-addr}$/i) {
++                if (control:Chargeable-User-Identity && \
++			(control:Chargeable-User-Identity != "")) {
+ 			update request {
+-				Calling-Station-Id := "%{tolower:%{1}-%{2}-%{3}-%{4}-%{5}-%{6}}"
++				Chargeable-User-Identity := "%{control:Chargeable-User-Identity}"
+ 			}
+-			updated
+-		}
+-		else {
+-			noop
++			cui
+ 		}
+ 	}
+ }
+diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/default freeradius-server-2.1.12-cui//raddb/sites-available/default
+--- freeradius-server-2.1.12-orig/raddb/sites-available/default	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/sites-available/default	2011-12-12 09:57:18.183943723 +0100
+@@ -1,3 +1,10 @@
++#  If *returning* the CUI, set cui_hash_key to some random string
++#  and uncomment the line below
++#	cui_hash_key = "some secret value"
++#  If *returning* the CUI and the Operator-Name attribute in request is 
++#  required, uncomment the line below
++#	cui_require_operator_name = yes
++
+ ######################################################################
+ #
+ #	As of 2.0.0, FreeRADIUS supports virtual hosts using the
+@@ -87,6 +94,15 @@
+ 	#  'raddb/huntgroups' files.
+ 	preprocess
+ 
++	# If Client-IP-Address indicate local source add NULL CUI 
++	# and Operator-Name
++#	if ( (Client-IP-Address!='XXXXX') {
++#		update request {
++#			Chargeable-User-Identity := '\\000'
++#			Operator-Name = "%{config:modules.sql[cui].sp_operator_name}"
++#		}
++#	}
++
+ 	#
+ 	#  If you want to have a log of authentication requests,
+ 	#  un-comment the following line, and the 'detail auth_log'
+@@ -376,6 +392,11 @@
+ #  Accounting.  Log the accounting data.
+ #
+ accounting {
++	#  cui_accounting reads the record form the temporary database,
++	#  selects the corresponding CUI value, as set cui_updatedb
++	#  and adds the CUI attribute to the accounting request
++	#  uncomment the line below if *requesting* the CUI
++#	cui_accounting
+ 	#
+ 	#  Create a 'detail'ed log of the packets.
+ 	#  Note that accounting requests which are proxied
+@@ -459,6 +480,17 @@
+ #  Once we KNOW that the user has been authenticated, there are
+ #  additional steps we can take.
+ post-auth {
++	#  cui_postauth reacts to the Chargeable-User-Identity request
++	#  by adding the md5 hash created from a configurable local
++	#  salt (cui_hash_key) and the (inner) User-Name value
++	#  uncomment the line below if *returning* the CUI
++#	cui_postauth
++	#
++	#  cui_updatedb updates the temporary database adding
++	#  the record containing the received CUI value to be later
++	#  used in accounting
++	#  uncomment the line below if *requesting* the CUI
++#	cui_updatedb
+ 	#  Get an address from the IP Pool.
+ #	main_pool
+ 
+@@ -580,6 +612,14 @@
+ 	#  as defined in the preproxy_users file.
+ #	files
+ 
++	# operator_name adds Operator-Name value to Access-Request
++#	operator_name
++
++	#  cui_pre-proxy adds the NULL CUI value to Access-Request
++	#  thus making it a Chargeable-User-Identity request
++	#  uncomment the line below if *requesting* the CUI
++#	cui_pre-proxy
++
+ 	#  Uncomment the following line if you want to filter requests
+ 	#  sent to remote servers based on the rules defined in the
+ 	#  'attrs.pre-proxy' file.
+diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/inner-tunnel freeradius-server-2.1.12-cui//raddb/sites-available/inner-tunnel
+--- freeradius-server-2.1.12-orig/raddb/sites-available/inner-tunnel	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/sites-available/inner-tunnel	2011-11-30 10:45:24.391071627 +0100
+@@ -260,6 +260,11 @@
+ #  Once we KNOW that the user has been authenticated, there are
+ #  additional steps we can take.
+ post-auth {
++	#  cui_postauth reacts to the Chargeable-User-Identity request
++	#  by adding the md5 hash created from a configurable local
++	#  salt (cui_hash_key) and the (inner) User-Name value
++	#  uncomment the line below if *returning* the CUI
++#	cui_postauth
+ 	# Note that we do NOT assign IP addresses here.
+ 	# If you try to assign IP addresses for EAP authentication types,
+ 	# it WILL NOT WORK.  You MUST use DHCP.
+diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.conf freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.conf
+--- freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.conf	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.conf	2011-11-30 10:44:38.022577914 +0100
+@@ -1,31 +1,55 @@
+ # -*- text -*-
+-
+ ##
+-##  Queries to update the CUI table.
++## cui.conf -- SQL - CUI queries
+ ##
+-postauth_query = "INSERT IGNORE INTO ${cui_table} \
+-	(clientipaddress, callingstationid, username, cui, lastaccounting) \
+-        VALUES \
+-	('%{Client-IP-Address}', '%{Calling-Station-Id}', '%{User-Name}', '%{reply:Chargeable-User-Identity}', NULL) ON DUPLICATE KEY UPDATE lastaccounting='0000-00-00 00:00:00', cui='%{reply:Chargeable-User-Identity}'";
++##      $Id$
++#
++#	This is a part of the  Chargeable-User-Identity module
++#	See doc/cui_howto.txt for more information
++
++
++#	postauth_query creates a temporary record remembering
++#	Client-IP-Address, Calling-Station-Id, User-Name,
++#	Chargeable-User-Identity.
++#	This information is used later to correlate accounting requests 
++#	with the information received in Access-Accept
++#
++	postauth_query = "INSERT IGNORE INTO ${cui_table} \
++		(clientipaddress, callingstationid, username, \
++		cui, lastaccounting) \
++                VALUES \
++		('%{Client-IP-Address}', '%{Calling-Station-Id}', \
++		'%{User-Name}', '%{reply:Chargeable-User-Identity}', NULL) \
++		ON DUPLICATE KEY UPDATE \
++		lastaccounting='0000-00-00 00:00:00', \
++		cui='%{reply:Chargeable-User-Identity}'";
++
++#	accounting_start_query and accounting_update_query are called
++#	by Accounting-Request Start or Interim Update.
++#	The appropriate temporary record is updates by entering
++#	the current time as the lastaccounting field.
++#	The value of lastaccounting can be used to clean up the database 
++#	from stale temporary records.
++#
++	accounting_start_query = "UPDATE ${cui_table} \
++		SET lastaccounting = CURRENT_TIMESTAMP \
++		WHERE clientipaddress = '%{Client-IP-Address}' \
++                AND callingstationid = '%{Calling-Station-Id}' \
++                AND username = '%{User-Name}' \
++		AND cui = '%{Chargeable-User-Identity}'";
+ 
+-accounting_start_query = "UPDATE ${cui_table} \
+-	SET \
+-                lastaccounting = CURRENT_TIMESTAMP \
+-	WHERE clientipaddress = '%{Client-IP-Address}' \
+-        AND callingstationid = '%{Calling-Station-Id}' \
+-        AND username = '%{User-Name}' \
+-	AND cui = '%{Chargeable-User-Identity}'";
+-  
+-accounting_update_query = "UPDATE ${cui_table} \
+-	SET \
+-                lastaccounting = CURRENT_TIMESTAMP \
+-	WHERE clientipaddress = '%{Client-IP-Address}' \
+-        AND callingstationid = '%{Calling-Station-Id}' \
+-        AND username = '%{User-Name}' \
+-	AND cui = '%{Chargeable-User-Identity}'";
++	accounting_update_query = "UPDATE ${cui_table} \
++		SET lastaccounting = CURRENT_TIMESTAMP \
++		WHERE clientipaddress = '%{Client-IP-Address}' \
++                AND callingstationid = '%{Calling-Station-Id}' \
++                AND username = '%{User-Name}' \
++		AND cui = '%{Chargeable-User-Identity}'";
+ 
+-accounting_stop_query = "DELETE FROM ${cui_table} WHERE \
+-	clientipaddress = '%{Client-IP-Address}' \
+-	AND callingstationid = '%{Calling-Station-Id}' \
+-	AND username = '%{User-Name}' \
+-	AND cui = '%{Chargeable-User-Identity}'";
++#	accounting_stop_query is called by Accounting-Request Stop.
++#	It deletes the temporary record form the database.
++#
++	accounting_stop_query = "DELETE FROM ${cui_table} WHERE \
++		clientipaddress = '%{Client-IP-Address}' \
++		AND callingstationid = '%{Calling-Station-Id}' \
++		AND username = '%{User-Name}' \
++		AND cui = '%{Chargeable-User-Identity}'";
+diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.sql freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.sql
+--- freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.sql	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.sql	2011-11-30 10:44:38.026577957 +0100
+@@ -1,3 +1,7 @@
++#
++# Table structure for table 'cui'
++#
++#
+ CREATE TABLE `cui` (
+   `clientipaddress` varchar(15) NOT NULL default '',
+   `callingstationid` varchar(50) NOT NULL default '',
+diff -Naur freeradius-server-2.1.12-orig/share/dictionary freeradius-server-2.1.12-cui//share/dictionary
+--- freeradius-server-2.1.12-orig/share/dictionary	2011-09-30 16:12:07.000000000 +0200
++++ freeradius-server-2.1.12-cui//share/dictionary	2011-11-30 10:45:50.387348286 +0100
+@@ -58,8 +58,8 @@
+ #	old names in the logfiles, INSTEAD OF the new names.
+ #
+ $INCLUDE dictionary.compat
+-$INCLUDE dictionary.usr.illegal
+-$INCLUDE dictionary.ascend.illegal
++#$INCLUDE dictionary.usr.illegal
++#$INCLUDE dictionary.ascend.illegal
+ 
+ #
+ #	Include the RFC dictionaries next.
