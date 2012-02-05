@@ -17,7 +17,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.12
-Release:	2
+Release:	3
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -25,6 +25,7 @@ Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
+Source4:	%{name}.tmpfiles
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-libdir.patch
 Patch2:		%{name}-makefile.patch
@@ -273,14 +274,16 @@ done
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,pam.d} \
 	$RPM_BUILD_ROOT%{_var}/log/{,archive}/freeradius/radacct \
-	$RPM_BUILD_ROOT%{mibdir}
+	$RPM_BUILD_ROOT%{mibdir} \
+	$RPM_BUILD_ROOT/usr/lib/tmpfiles.d \
 
 %{__make} -j1 install \
 	R=$RPM_BUILD_ROOT
 
-install %{SOURCE1}	$RPM_BUILD_ROOT/etc/logrotate.d/%{name}
-install %{SOURCE2}	$RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
-install %{SOURCE3}	$RPM_BUILD_ROOT/etc/pam.d/radius
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/logrotate.d/%{name}
+install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/radius
+install %{SOURCE4} $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/%{name}.conf
 
 # Install mibs:
 install mibs/FREERADIUS-*.txt $RPM_BUILD_ROOT%{mibdir}
@@ -527,6 +530,7 @@ fi
 %attr(771,root,radius) %dir %{_var}/log/archive/freeradius
 %attr(771,root,radius) %dir %{_var}/log/archive/freeradius/radacct
 %attr(775,root,radius) %dir /var/run/freeradius
+/usr/lib/tmpfiles.d/%{name}.conf
 
 %if %{with kerberos5}
 %files module-krb5
