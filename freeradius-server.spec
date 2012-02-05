@@ -17,7 +17,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.1.12
-Release:	1.5
+Release:	2
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -73,7 +73,7 @@ Provides:	group(radius)
 Provides:	user(radius)
 Obsoletes:	cistron-radius
 Obsoletes:	freeradius < 2.0
-Conflicts:	logrotate < 3.7-4
+Conflicts:	logrotate < 3.8.0
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		mibdir			%{_datadir}/mibs
