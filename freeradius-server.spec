@@ -16,12 +16,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.1.12
-Release:	5
+Version:	2.2.0
+Release:	1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	862d3a2c11011e61890ba84fa636ed8c
+# Source0-md5:	0fb333fe6a64eb2b1dd6ef67f7bca119
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -34,8 +34,7 @@ Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
 # Patch taken from http://download.ag-projects.com/CDRTool/contrib/freeradius-brandinger/
 Patch6:		failed_calls_accounting.patch
-# http://eduroam.pl/Dokumentacja/cui-fr-2.1.12.patch
-Patch7:		cui-fr-2.1.12.patch
+Patch7:		http://eduroam.pl/Dokumentacja/cui-fr-2.2.0.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf
@@ -382,6 +381,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/always
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/attr_filter
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/attr_rewrite
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/cache
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/chap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/checkval
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/counter
@@ -389,7 +389,9 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail.example.com
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/detail.log
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/dhcp_sqlippool
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/digest
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/dynamic_clients
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/echo
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/etc_group
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/exec
@@ -403,11 +405,14 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/mac2ip
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/mac2vlan
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/mschap
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/ntlm_auth
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/opendirectory
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/pap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/passwd
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/policy
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/preprocess
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/radutmp
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/radrelay
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/realm
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/replicate
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/modules/smbpasswd
@@ -443,6 +448,8 @@ fi
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_attr_rewrite*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cache*.so
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cache*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_caching*.so
 %attr(755,root,root) %{_libdir}/freeradius/rlm_caching*.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.so
@@ -620,8 +627,8 @@ fi
 
 %files libs
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.??.so
-%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.??.so
+%attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.?.so
+%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.?.so
 %dir %{_libdir}/freeradius
 
 %files devel

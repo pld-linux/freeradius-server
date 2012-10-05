@@ -1,39 +1,106 @@
-diff -Naur freeradius-server-2.1.12-orig/raddb/modules/cui freeradius-server-2.1.12-cui//raddb/modules/cui
---- freeradius-server-2.1.12-orig/raddb/modules/cui	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/modules/cui	2011-11-30 10:43:51.074077716 +0100
-@@ -21,5 +21,6 @@
+diff -Naur freeradius-server-2.2.0-orig/doc/cui_howto.txt freeradius-server-2.2.0/doc/cui_howto.txt
+--- freeradius-server-2.2.0-orig/doc/cui_howto.txt	1970-01-01 01:00:00.000000000 +0100
++++ freeradius-server-2.2.0/doc/cui_howto.txt	2012-09-13 10:57:56.645722777 +0200
+@@ -0,0 +1,78 @@
++Chargeable-User-Identity (CUI) support.
++
++1. OVERVIEW
++
++This extension introduces support for Chargeable-User-Identity (CUI) attribute 
++as defined in RFC 4372. 
++
++The CUI attribute is meant to support roaming scenarios where
++the user is accessing the network at one location (Service Provider - SP)
++while authenticated by a RADIUS server at another institution (Identity
++Provider - IdP). CUI provides means for the SP to request the IdP 
++to return a unique, persistent, opaque user identifier.
++
++As defined in RFC 4372, CUI request is sent as a NULL value (single
++zero byte) of CUI attribute inside the Access-Request packet. 
++CUI response should be sent as the CUI value inside the Access-Accept.
++
++This extension has the following functionality:
++
++The SP side (*requesting* CUI):
++	- add the CUI NULL attribute to Access-Request proxied from 
++	  the local NAS to the IdP
++	- receive the CUI value from the IdP and store it in the local
++	  database
++	- update Accounting-Request packets sent by NAS by adding 
++	  the appropriate CUI attribute (unless the attibute is 
++	  already present).
++
++The IdP side (*returning* CUI):
++	- respond to the CUI request by generating the CUI value. 
++	  The value is created as the md5 hash if a configurable local
++	  salt and the User-Name attribute value.
++
++While CUI support has been added for roaming it is also useful for local
++accounting.
++
++2. INSTALLATION
++
++The CUI *requesting* and CUI *returning* sides are implemented and
++described separately. Most likely you want to run both, so just follow
++the instructions of both sections.
++
++2.1 *requesting* CUI 
++
++	- Setup a MySQL database by creating (or using) a database of your
++	  choice and create an additional table cui. The schema is located
++	  in ${raddbdir}/sql/mysql/cui.sql.
++
++	- Enter the necessary details into ${raddbdir}/modules/cui.
++	  Things you need to modify are: 
++	    server - typically this will be localhost;
++	    login - mysql user allowed to modify the tables
++	    password - password for this user
++	    radius_db - database name you wish to use
++
++	- Modify the the main configuration file 
++	  "${raddbdir}/sites-availabe/default".
++	  Search for CUI. There are four sections where CUI is mentioned.
++	  Follow the instructions for *requesting* the CUI.
++
++2.2 *returning* CUI 
++
++	- Modify the the main configuration file
++	  "${raddbdir}/sites-available/default".
++	  Search for CUI. There are four sections where CUI is mentioned.
++  	  Follow the instructions for *returning* the CUI.
++	  The cui_hash_key is used to safeguard the CUI from dictionary
++	  attacks and should be set to some "random" string.
++
++	- Modify "${raddbdir}/sites-availabe/inner-tunnel"
++	  Search for CUI. There is one section where CUI is mentioned.
++	  Follow the instructions for *returning* the CUI.
++
++3. ACKNOWLEDGEMENTS
++
++Authors: Maja Gorecka-Wolniewicz <mgw@umk.pl>, Alan DeKok
++
++Contributors: Stefan Winter, Tomasz Wolniewicz
+diff -Naur freeradius-server-2.2.0-orig/raddb/modules/cui freeradius-server-2.2.0/raddb/modules/cui
+--- freeradius-server-2.2.0-orig/raddb/modules/cui	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/modules/cui	2012-09-13 10:58:19.975050772 +0200
+@@ -21,5 +21,5 @@
  	connect_failure_retry_delay = 60
  	cui_table = "cui"
  	sql_user_name = "%{User-Name}"
 -#$INCLUDE sql/${database}/cui.conf
-+	sp_operator_name = "your.registered.domain.name"
-+	#$INCLUDE sql/${database}/cui.conf
++	$INCLUDE sql/${database}/cui.conf
  }
-diff -Naur freeradius-server-2.1.12-orig/raddb/policy.conf freeradius-server-2.1.12-cui//raddb/policy.conf
---- freeradius-server-2.1.12-orig/raddb/policy.conf	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/policy.conf	2011-12-07 11:19:42.500158102 +0100
-@@ -65,75 +65,79 @@
+diff -Naur freeradius-server-2.2.0-orig/raddb/policy.conf freeradius-server-2.2.0/raddb/policy.conf
+--- freeradius-server-2.2.0-orig/raddb/policy.conf	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/policy.conf	2012-09-13 11:00:40.929563217 +0200
+@@ -145,53 +145,80 @@
+                 }
  	}
  
- 	#
--	#  Force some sanity on User-Name.  This helps to avoid issues
--	#  issues where the back-end database is "forgiving" about
--	#  what constitutes a user name.
--	#
--	filter_username {
--		# spaces at the start: reject
--		if (User-Name =~ /^ /) {
--			reject
--		}
--
--		# spaces at the end: reject
--		if (User-Name =~ / $$/) {
--			reject
--		}
--
--		# Mixed case: reject
--		if (User-Name != "%{tolower:%{User-Name}}") {
--			reject
+-	#	
+-	#  The following policies are for the Chargeable-User-Identity
+-	#  (CUI) configuration.
++	#
 +	#	The following policies are for the Operator-Name handling
 +	#	(RFC5580) 
 +	#
@@ -43,13 +110,8 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/policy.conf freeradius-server-2.1
 +				Operator-Name := "%{config:sp_operator_name}"
 +				Chargeable-User-Identity = '\\000'
 +			}
- 		}
- 	}
--
--
--	#	
--	#  The following policies are for the Chargeable-User-Identity
--	#  (CUI) configuration.
++		}
++	}
 +	
 +	#
 +	#	The following policies are for the Chargeable-User-Identity
@@ -131,11 +193,13 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/policy.conf freeradius-server-2.1
  	#
  	cui_accounting {
  		#
-@@ -142,56 +146,19 @@
+@@ -199,20 +226,22 @@
+ 		#  in the DB.
  		#
  		if (!Chargeable-User-Identity) {
- 			update control {
--				Chargable-User-Identity := "%{cui: SELECT cui FROM cui WHERE clientipaddress = '%{Client-IP-Address}' AND callingstationid = '%{Calling-Station-Id}' AND username = '%{User-Name}'}"
+-			update request {
+-				Chargeable-User-Identity := "%{cui: SELECT cui FROM cui WHERE clientipaddress = '%{Client-IP-Address}' AND callingstationid = '%{Calling-Station-Id}' AND username = '%{User-Name}'}"
++			update control {
 +				Chargeable-User-Identity = "%{cui: SELECT cui FROM cui WHERE clientipaddress = '%{Client-IP-Address}' AND callingstationid = '%{Calling-Station-Id}' AND username = '%{User-Name}'}"
  			}
  		}
@@ -147,85 +211,36 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/policy.conf freeradius-server-2.1
 +		#  when we last saw this CUI.
  		#
 -		if (Chargeable-User-Identity && (Chargeable-User-Identity != "")) {
--			cui
--		}
--	}
--
--	#
--	#  Normalize the MAC Addresses in the Calling/Called-Station-Id
--	#
--	mac-addr = ([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})
--
--	#  Add "rewrite.called_station_id" in the "authorize" and "preacct"
--	#  sections.
--	rewrite.called_station_id {
--		if((Called-Station-Id) && "%{Called-Station-Id}" =~ /^%{config:policy.mac-addr}(:(.+))?$/i) {
--			update request {
--				Called-Station-Id := "%{tolower:%{1}-%{2}-%{3}-%{4}-%{5}-%{6}}"
--			}
--
--			# SSID component?
--			if ("%{8}") {
--				update request {
--					Called-Station-Id := "%{Called-Station-Id}:%{8}"
--				}
--			}
--			updated
--		}
--		else {
--			noop
--		}
--	}
--
--	#  Add "rewrite.calling_station_id" in the "authorize" and "preacct"
--	#  sections.
--	rewrite.calling_station_id {
--		if((Calling-Station-Id) && "%{Calling-Station-Id}" =~ /^%{config:policy.mac-addr}$/i) {
 +                if (control:Chargeable-User-Identity && \
 +			(control:Chargeable-User-Identity != "")) {
- 			update request {
--				Calling-Station-Id := "%{tolower:%{1}-%{2}-%{3}-%{4}-%{5}-%{6}}"
++			update request {
 +				Chargeable-User-Identity := "%{control:Chargeable-User-Identity}"
- 			}
--			updated
--		}
--		else {
--			noop
-+			cui
++			}
+ 			cui
  		}
  	}
- }
-diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/default freeradius-server-2.1.12-cui//raddb/sites-available/default
---- freeradius-server-2.1.12-orig/raddb/sites-available/default	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/sites-available/default	2011-12-12 09:57:18.183943723 +0100
-@@ -1,3 +1,10 @@
+-
+ 	#
+ 	#  Normalize the MAC Addresses in the Calling/Called-Station-Id
+ 	#
+diff -Naur freeradius-server-2.2.0-orig/raddb/sites-available/default freeradius-server-2.2.0/raddb/sites-available/default
+--- freeradius-server-2.2.0-orig/raddb/sites-available/default	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/sites-available/default	2012-09-13 11:04:54.939298452 +0200
+@@ -1,3 +1,13 @@
 +#  If *returning* the CUI, set cui_hash_key to some random string
 +#  and uncomment the line below
-+#	cui_hash_key = "some secret value"
++#       cui_hash_key = "some secret value"
 +#  If *returning* the CUI and the Operator-Name attribute in request is 
 +#  required, uncomment the line below
-+#	cui_require_operator_name = yes
-+
++#       cui_require_operator_name = yes
++#  If Operator-Name attribute is used, uncomment the line below and
++#  fill out with one of your registered DNS domain names, which
++#  will be used as the Operator-Name attribute value
++#       sp_operator_name = "1your.registered.domain.name"
  ######################################################################
  #
  #	As of 2.0.0, FreeRADIUS supports virtual hosts using the
-@@ -87,6 +94,15 @@
- 	#  'raddb/huntgroups' files.
- 	preprocess
- 
-+	# If Client-IP-Address indicate local source add NULL CUI 
-+	# and Operator-Name
-+#	if ( (Client-IP-Address!='XXXXX') {
-+#		update request {
-+#			Chargeable-User-Identity := '\\000'
-+#			Operator-Name = "%{config:modules.sql[cui].sp_operator_name}"
-+#		}
-+#	}
-+
- 	#
- 	#  If you want to have a log of authentication requests,
- 	#  un-comment the following line, and the 'detail auth_log'
-@@ -376,6 +392,11 @@
+@@ -376,6 +386,11 @@
  #  Accounting.  Log the accounting data.
  #
  accounting {
@@ -237,7 +252,7 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/default freeradiu
  	#
  	#  Create a 'detail'ed log of the packets.
  	#  Note that accounting requests which are proxied
-@@ -459,6 +480,17 @@
+@@ -459,6 +474,17 @@
  #  Once we KNOW that the user has been authenticated, there are
  #  additional steps we can take.
  post-auth {
@@ -255,10 +270,11 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/default freeradiu
  	#  Get an address from the IP Pool.
  #	main_pool
  
-@@ -580,6 +612,14 @@
+@@ -581,6 +607,14 @@
+ 	#  Uncomment the following line if you want to change attributes
  	#  as defined in the preproxy_users file.
  #	files
- 
++	
 +	# operator_name adds Operator-Name value to Access-Request
 +#	operator_name
 +
@@ -266,14 +282,13 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/default freeradiu
 +	#  thus making it a Chargeable-User-Identity request
 +	#  uncomment the line below if *requesting* the CUI
 +#	cui_pre-proxy
-+
+ 
  	#  Uncomment the following line if you want to filter requests
  	#  sent to remote servers based on the rules defined in the
- 	#  'attrs.pre-proxy' file.
-diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/inner-tunnel freeradius-server-2.1.12-cui//raddb/sites-available/inner-tunnel
---- freeradius-server-2.1.12-orig/raddb/sites-available/inner-tunnel	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/sites-available/inner-tunnel	2011-11-30 10:45:24.391071627 +0100
-@@ -260,6 +260,11 @@
+diff -Naur freeradius-server-2.2.0-orig/raddb/sites-available/inner-tunnel freeradius-server-2.2.0/raddb/sites-available/inner-tunnel
+--- freeradius-server-2.2.0-orig/raddb/sites-available/inner-tunnel	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/sites-available/inner-tunnel	2012-09-13 11:05:56.237168046 +0200
+@@ -261,6 +261,12 @@
  #  Once we KNOW that the user has been authenticated, there are
  #  additional steps we can take.
  post-auth {
@@ -282,12 +297,13 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sites-available/inner-tunnel free
 +	#  salt (cui_hash_key) and the (inner) User-Name value
 +	#  uncomment the line below if *returning* the CUI
 +#	cui_postauth
++
  	# Note that we do NOT assign IP addresses here.
  	# If you try to assign IP addresses for EAP authentication types,
  	# it WILL NOT WORK.  You MUST use DHCP.
-diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.conf freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.conf
---- freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.conf	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.conf	2011-11-30 10:44:38.022577914 +0100
+diff -Naur freeradius-server-2.2.0-orig/raddb/sql/mysql/cui.conf freeradius-server-2.2.0/raddb/sql/mysql/cui.conf
+--- freeradius-server-2.2.0-orig/raddb/sql/mysql/cui.conf	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/sql/mysql/cui.conf	2012-09-13 10:59:05.245170029 +0200
 @@ -1,31 +1,55 @@
  # -*- text -*-
 -
@@ -370,9 +386,9 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.conf freeradius-ser
 +		AND callingstationid = '%{Calling-Station-Id}' \
 +		AND username = '%{User-Name}' \
 +		AND cui = '%{Chargeable-User-Identity}'";
-diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.sql freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.sql
---- freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.sql	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//raddb/sql/mysql/cui.sql	2011-11-30 10:44:38.026577957 +0100
+diff -Naur freeradius-server-2.2.0-orig/raddb/sql/mysql/cui.sql freeradius-server-2.2.0/raddb/sql/mysql/cui.sql
+--- freeradius-server-2.2.0-orig/raddb/sql/mysql/cui.sql	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/raddb/sql/mysql/cui.sql	2012-09-13 10:59:05.245170029 +0200
 @@ -1,3 +1,7 @@
 +#
 +# Table structure for table 'cui'
@@ -381,17 +397,3 @@ diff -Naur freeradius-server-2.1.12-orig/raddb/sql/mysql/cui.sql freeradius-serv
  CREATE TABLE `cui` (
    `clientipaddress` varchar(15) NOT NULL default '',
    `callingstationid` varchar(50) NOT NULL default '',
-diff -Naur freeradius-server-2.1.12-orig/share/dictionary freeradius-server-2.1.12-cui//share/dictionary
---- freeradius-server-2.1.12-orig/share/dictionary	2011-09-30 16:12:07.000000000 +0200
-+++ freeradius-server-2.1.12-cui//share/dictionary	2011-11-30 10:45:50.387348286 +0100
-@@ -58,8 +58,8 @@
- #	old names in the logfiles, INSTEAD OF the new names.
- #
- $INCLUDE dictionary.compat
--$INCLUDE dictionary.usr.illegal
--$INCLUDE dictionary.ascend.illegal
-+#$INCLUDE dictionary.usr.illegal
-+#$INCLUDE dictionary.ascend.illegal
- 
- #
- #	Include the RFC dictionaries next.
