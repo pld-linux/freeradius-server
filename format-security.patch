@@ -1,0 +1,11 @@
+--- freeradius-server-2.2.0/src/modules/rlm_ruby/rlm_ruby.c~	2012-12-07 08:22:05.957883039 +0100
++++ freeradius-server-2.2.0/src/modules/rlm_ruby/rlm_ruby.c	2012-12-07 08:27:18.491205348 +0100
+@@ -91,7 +91,7 @@
+     char *msg;
+     status = FIX2INT(msg_type);
+     msg = STR2CSTR(rb_msg);
+-    radlog(status, msg);
++    radlog(status, "%s", msg);
+     return Qnil;
+ }
+ 
