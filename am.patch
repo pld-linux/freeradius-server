@@ -1,0 +1,11 @@
+--- freeradius-server-2.2.0/libltdl/configure.ac~	2012-09-10 13:51:34.000000000 +0200
++++ freeradius-server-2.2.0/libltdl/configure.ac	2013-06-09 20:39:52.891748305 +0200
+@@ -51,7 +51,7 @@
+ ## Automake Initialisation. ##
+ ## ------------------------ ##
+ AM_INIT_AUTOMAKE(AC_PACKAGE_TARNAME, AC_PACKAGE_VERSION, -)
+-AM_CONFIG_HEADER([config.h:config-h.in])
++AC_CONFIG_HEADERS([config.h:config-h.in])
+ 
+ 
+ ## ------------------ ##
