@@ -16,12 +16,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.2.0
-Release:	5
+Version:	2.2.5
+Release:	1
 License:	GPL
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	0fb333fe6a64eb2b1dd6ef67f7bca119
+# Source0-md5:	40535bace507d7a3134c3d858f3cbc5a
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -632,7 +632,7 @@ fi
 %files libs
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/libfreeradius-eap-?.?.?.so
-%attr(755,root,root) %{_libdir}/libfreeradius-radius-?.?.?.so
+%attr(755,root,root) %{_libdir}/libfreeradius-radius-??????.so
 %dir %{_libdir}/freeradius
 
 %files devel

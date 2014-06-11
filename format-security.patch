@@ -9,3 +9,14 @@
      return Qnil;
  }
  
+--- freeradius-server-2.2.5.orig/src/main/radclient.c	2014-04-28 19:13:08.000000000 +0000
++++ freeradius-server-2.2.5/src/main/radclient.c	2014-06-11 16:34:16.990041774 +0000
+@@ -934,7 +934,7 @@
+ 			timeout = atof(optarg);
+ 			break;
+ 		case 'v':
+-			printf(radclient_version);
++			printf("%s", radclient_version);
+ 			exit(0);
+ 			break;
+ 		case 'x':
