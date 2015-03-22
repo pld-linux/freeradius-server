@@ -9,3 +9,39 @@
  
  
  ## ------------------ ##
+--- freeradius-server-2.2.6/src/modules/rlm_ldap/configure.in.orig	2014-11-18 20:56:52.000000000 +0100
++++ freeradius-server-2.2.6/src/modules/rlm_ldap/configure.in	2015-03-22 09:55:46.702919736 +0100
+@@ -49,9 +49,6 @@
+ 	  esac ]
+ 	)
+ 
+-	dnl extra argument: --enable-shared --disable-shared
+-	AC_ENABLE_SHARED
+-
+ 	dnl OpenLDAP doesn't provide an autoconf test for their libldap,
+ 	dnl and we can't reasonably check for all the dependancies for
+ 	dnl every version and every set of options.
+--- freeradius-server-2.2.6/configure.in.orig	2014-11-18 20:56:52.000000000 +0100
++++ freeradius-server-2.2.6/configure.in	2015-03-22 10:07:01.436224750 +0100
+@@ -121,17 +121,10 @@
+ dnl use system-wide libtool, if it exists
+ AC_ARG_WITH(system-libtool,
+ [  --with-system-libtool   Use the libtool installed in your system (default=use our own)],
+-[ AC_PATH_PROG(LIBTOOL, libtool,,$PATH:/usr/local/bin) AC_LIBTOOL_DLOPEN
+- AC_PROG_LIBTOOL],
+-[
+-  LIBTOOL="`pwd`/libtool"
+-  AC_SUBST(LIBTOOL)
+-  dnl ensure that we're looking for dlopen
+-  AC_LIBTOOL_DLOPEN
+-
+-  dnl Figure out how to build shared libraries
+-  AC_PROG_LIBTOOL
+-])
++[ AC_PATH_PROG(LIBTOOL, libtool,,$PATH:/usr/local/bin)
++ ])
++AC_PROG_LIBTOOL
++AC_LIBTOOL_DLOPEN
+ 
+ 
+ dnl Put this in later, when all distributed modules use autoconf.
