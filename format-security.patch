@@ -9,17 +9,6 @@
      return Qnil;
  }
  
---- freeradius-server-2.2.5.orig/src/main/radclient.c	2014-04-28 19:13:08.000000000 +0000
-+++ freeradius-server-2.2.5/src/main/radclient.c	2014-06-11 16:34:16.990041774 +0000
-@@ -934,7 +934,7 @@
- 			timeout = atof(optarg);
- 			break;
- 		case 'v':
--			printf(radclient_version);
-+			printf("%s", radclient_version);
- 			exit(0);
- 			break;
- 		case 'x':
 --- freeradius-server-2.2.6/src/modules/rlm_sql/drivers/rlm_sql_oracle/sql_oracle.c.orig	2014-11-18 20:56:52.000000000 +0100
 +++ freeradius-server-2.2.6/src/modules/rlm_sql/drivers/rlm_sql_oracle/sql_oracle.c	2015-03-22 07:30:08.669953101 +0100
 @@ -242,7 +242,7 @@
