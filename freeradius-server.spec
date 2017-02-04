@@ -18,7 +18,7 @@ Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	2.2.9
 Release:	1
-License:	GPL
+License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
 # Source0-md5:	d1398327ba4e23c75da06d8a0e01096b
@@ -291,6 +291,7 @@ Moduł Unix do serwera FreeRADIUS.
 %package libs
 Summary:	FreeRADIUS server libraries
 Summary(pl.UTF-8):	Biblioteki serwera FreeRADIUS
+License:	LGPL v2 (libfreeradius-radius), GPL v2 (libfreeradius-eap)
 Group:		Libraries
 
 %description libs
@@ -302,6 +303,7 @@ Biblioteki serwera FreeRADIUS.
 %package devel
 Summary:	Header files for FreeRADIUS server libraries
 Summary(pl.UTF-8):	Pliki nagłówkowe bibliotek serwera FreeRADIUS
+License:	LGPL v2 (libfreeradius-radius), GPL v2 (libfreeradius-eap)
 Group:		Development/Libraries
 Requires:	%{name}-libs = %{version}-%{release}
 
@@ -410,6 +412,13 @@ install mibs/FREERADIUS-*.txt $RPM_BUILD_ROOT%{mibdir}
 %{__rm} -r $RPM_BUILD_ROOT%{_docdir}/freeradius \
 	%{!?with_oci:$RPM_BUILD_ROOT%{_sysconfdir}/raddb/sql/oracle}
 
+# prepare cleaned up docs for rpm
+install -d docs-rpm
+cp -a doc scripts docs-rpm
+%{__rm} docs-rpm/doc/{.gitignore,CYGWIN.rst,DIFFS.rst,MACOSX,OS2,Makefile*,examples/Makefile,rfc/{Makefile,update.sh,*.pl}}
+%{__rm} docs-rpm/scripts/{.gitignore,Makefile,*.in,radsqlrelay,radwatch,raddebug,cryptpasswd}
+%{__rm} -r docs-rpm/scripts/solaris
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -469,7 +478,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%doc COPYRIGHT CREDITS README.rst doc/* scripts
+%doc COPYRIGHT CREDITS README.rst docs-rpm/*
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/freeradius-server
 %attr(754,root,root) /etc/rc.d/init.d/freeradius-server
 %attr(755,root,root) %{_bindir}/rad_counter
