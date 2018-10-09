@@ -1,7 +1,7 @@
-diff -ur freeradius-server-2.2.5.orig/raddb/radiusd.conf.in freeradius-server-2.2.5/raddb/radiusd.conf.in
---- freeradius-server-2.2.5.orig/raddb/radiusd.conf.in	2014-04-28 19:13:08.000000000 +0000
-+++ freeradius-server-2.2.5/raddb/radiusd.conf.in	2014-06-11 16:01:09.900016369 +0000
-@@ -103,7 +103,7 @@
+diff -dur -x '*~' -x '*.orig' -x '*.rej' freeradius-server-3.0.17.orig/raddb/radiusd.conf.in freeradius-server-3.0.17/raddb/radiusd.conf.in
+--- freeradius-server-3.0.17.orig/raddb/radiusd.conf.in	2018-10-09 14:36:25.000000000 +0200
++++ freeradius-server-3.0.17/raddb/radiusd.conf.in	2018-10-09 14:37:15.000000000 +0200
+@@ -105,7 +105,7 @@
  #	make
  #	make install
  #
@@ -10,74 +10,15 @@ diff -ur freeradius-server-2.2.5.orig/raddb/radiusd.conf.in freeradius-server-2.
  
  #  pidfile: Where to place the PID of the RADIUS server.
  #
-diff -ur freeradius-server-2.2.5.orig/src/main/mainconfig.c freeradius-server-2.2.5/src/main/mainconfig.c
---- freeradius-server-2.2.5.orig/src/main/mainconfig.c	2014-04-28 19:13:08.000000000 +0000
-+++ freeradius-server-2.2.5/src/main/mainconfig.c	2014-06-11 16:01:09.901016378 +0000
-@@ -235,7 +235,7 @@
- 	{ "sbindir",            PW_TYPE_STRING_PTR, 0, &sbindir,            "${prefix}/sbin"},
- 	{ "logdir",             PW_TYPE_STRING_PTR, 0, &radlog_dir,        "${localstatedir}/log"},
- 	{ "run_dir",            PW_TYPE_STRING_PTR, 0, &run_dir,           "${localstatedir}/run/${name}"},
--	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib"},
-+	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib/freeradius"},
- 	{ "radacctdir",         PW_TYPE_STRING_PTR, 0, &radacct_dir,       "${logdir}/radacct" },
- 	{ "panic_action",	PW_TYPE_STRING_PTR, 0, &mainconfig.panic_action, NULL},
- 	{ "hostname_lookups",   PW_TYPE_BOOLEAN,    0, &fr_dns_lookups,      "no" },
-diff -ur freeradius-server-2.2.5.orig/src/modules/rlm_sql/drivers/rules.mak freeradius-server-2.2.5/src/modules/rlm_sql/drivers/rules.mak
---- freeradius-server-2.2.5.orig/src/modules/rlm_sql/drivers/rules.mak	2014-04-28 19:13:08.000000000 +0000
-+++ freeradius-server-2.2.5/src/modules/rlm_sql/drivers/rules.mak	2014-06-11 16:07:19.716021082 +0000
-@@ -103,7 +103,7 @@
- $(TARGET).la: $(LT_OBJS)
- 	$(LIBTOOL) --mode=link --tag=CC $(CC) -release $(RADIUSD_VERSION_STRING) \
- 	-module $(LINK_MODE) $(LDFLAGS) $(RLM_SQL_LDFLAGS) -o $@ \
--	-rpath $(libdir) $^ $(RLM_SQL_LIBS)
-+	-rpath $(libdir)/freeradius $^ $(RLM_SQL_LIBS)
- 
- #######################################################################
- #
-@@ -141,12 +141,12 @@
- #  Do any module-specific installation.
- #
- #  If there isn't a TARGET defined, then don't do anything.
--#  Otherwise, install the libraries into $(libdir)
-+#  Otherwise, install the libraries into $(libdir)/freeradius
- #
- install:
- 	if [ "x$(TARGET)" != "x" ]; then \
- 	    $(LIBTOOL) --mode=install $(INSTALL) -c \
--		$(TARGET).la $(R)$(libdir)/$(TARGET).la || exit $$?; \
--	    rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION_STRING).la; \
--	    ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION_STRING).la || exit $$?; \
-+		$(TARGET).la $(R)$(libdir)/freeradius/$(TARGET).la || exit $$?; \
-+	    rm -f $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION_STRING).la; \
-+	    ln -s $(TARGET).la $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION_STRING).la || exit $$?; \
- 	fi
-diff -ur freeradius-server-2.2.5.orig/src/modules/rules.mak freeradius-server-2.2.5/src/modules/rules.mak
---- freeradius-server-2.2.5.orig/src/modules/rules.mak	2014-04-28 19:13:08.000000000 +0000
-+++ freeradius-server-2.2.5/src/modules/rules.mak	2014-06-11 16:06:32.670020429 +0000
-@@ -122,7 +122,7 @@
- $(TARGET).la: $(RLM_SUBDIRS) $(LT_OBJS)
- 	$(LIBTOOL) --mode=link --tag=CC $(CC) -release $(RADIUSD_VERSION_STRING) \
- 	-module $(LINK_MODE) $(LDFLAGS) $(RLM_LDFLAGS) -o $@     \
--	-rpath $(libdir) $^ $(LIBRADIUS) $(RLM_LIBS) $(LIBS)
-+	-rpath $(libdir)/freeradius $^ $(LIBRADIUS) $(RLM_LIBS) $(LIBS)
- 
- #######################################################################
- #
-@@ -163,13 +163,13 @@
- #  Do any module-specific installation.
- #
- #  If there isn't a TARGET defined, then don't do anything.
--#  Otherwise, install the libraries into $(libdir)
-+#  Otherwise, install the libraries into $(libdir)/freeradius
- #
- install:
- 	@[ "x$(RLM_INSTALL)" = "x" ] || $(MAKE) $(MFLAGS) $(RLM_INSTALL)
- 	if [ "x$(TARGET)" != "x" ]; then \
- 	    $(LIBTOOL) --mode=install $(INSTALL) -c \
--		$(TARGET).la $(R)$(libdir)/$(TARGET).la || exit $$?; \
--	    rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION_STRING).la; \
--	    ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION_STRING).la || exit $$?; \
-+		$(TARGET).la $(R)$(libdir)/freeradius/$(TARGET).la || exit $$?; \
-+	    rm -f $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION_STRING).la; \
-+	    ln -s $(TARGET).la $(R)$(libdir)/freeradius/$(TARGET)-$(RADIUSD_VERSION_STRING).la || exit $$?; \
- 	fi
+diff -dur -x '*~' -x '*.orig' -x '*.rej' freeradius-server-3.0.17.orig/src/main/mainconfig.c freeradius-server-3.0.17/src/main/mainconfig.c
+--- freeradius-server-3.0.17.orig/src/main/mainconfig.c	2018-04-17 19:12:27.000000000 +0200
++++ freeradius-server-3.0.17/src/main/mainconfig.c	2018-10-09 14:39:21.000000000 +0200
+@@ -183,7 +183,7 @@
+ 	{ "sbindir", FR_CONF_POINTER(PW_TYPE_STRING, &sbindir), "${prefix}/sbin"},
+ 	{ "logdir", FR_CONF_POINTER(PW_TYPE_STRING, &radlog_dir), "${localstatedir}/log"},
+ 	{ "run_dir", FR_CONF_POINTER(PW_TYPE_STRING, &run_dir), "${localstatedir}/run/${name}"},
+-	{ "libdir", FR_CONF_POINTER(PW_TYPE_STRING, &radlib_dir), "${prefix}/lib"},
++	{ "libdir", FR_CONF_POINTER(PW_TYPE_STRING, &radlib_dir), "${prefix}/lib/freeradius"},
+ 	{ "radacctdir", FR_CONF_POINTER(PW_TYPE_STRING, &radacct_dir), "${logdir}/radacct" },
+ 	{ "panic_action", FR_CONF_POINTER(PW_TYPE_STRING, &main_config.panic_action), NULL},
+ 	{ "hostname_lookups", FR_CONF_POINTER(PW_TYPE_BOOLEAN, &fr_dns_lookups), "no" },

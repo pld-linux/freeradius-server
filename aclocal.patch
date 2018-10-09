@@ -1,0 +1,43 @@
+diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_perl/configure.ac freeradius-server-3.0.17/src/modules/rlm_perl/configure.ac
+--- freeradius-server-3.0.17.orig/src/modules/rlm_perl/configure.ac	2018-04-17 19:12:27.000000000 +0200
++++ freeradius-server-3.0.17/src/modules/rlm_perl/configure.ac	2018-10-09 15:03:14.000000000 +0200
+@@ -3,8 +3,6 @@
+ AC_REVISION($Revision$)
+ AC_DEFUN(modname,[rlm_perl])
+ 
+-m4_include([ax_with_prog.m4])
+-
+ if test x$with_[]modname != xno; then
+ 	AC_PROG_CC
+ 	AC_PROG_CPP
+diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_rest/configure.ac freeradius-server-3.0.17/src/modules/rlm_rest/configure.ac
+--- freeradius-server-3.0.17.orig/src/modules/rlm_rest/configure.ac	2018-04-17 19:12:27.000000000 +0200
++++ freeradius-server-3.0.17/src/modules/rlm_rest/configure.ac	2018-10-09 15:03:36.000000000 +0200
+@@ -3,7 +3,6 @@
+ AC_REVISION($Revision$)
+ AC_DEFUN(modname,[rlm_rest])
+ AC_CONFIG_HEADER(config.h)
+-m4_include([m4/libcurl_check_config.m4])
+ 
+ if test x$with_[]modname != xno; then
+ 
+diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_ruby/configure.ac freeradius-server-3.0.17/src/modules/rlm_ruby/configure.ac
+--- freeradius-server-3.0.17.orig/src/modules/rlm_ruby/configure.ac	2018-04-17 19:12:27.000000000 +0200
++++ freeradius-server-3.0.17/src/modules/rlm_ruby/configure.ac	2018-10-09 15:03:26.000000000 +0200
+@@ -3,16 +3,10 @@
+ AC_REVISION($Revision: 1.9 $)
+ AC_DEFUN(modname,[rlm_ruby])
+ 
+-m4_include([ax_with_prog.m4])
+-
+ AC_DEFUN([AX_WITH_RUBY],[
+     AX_WITH_PROG([RUBY],[ruby],[not-found],[${PATH}:/usr/bin:/usr/local/bin])
+ ])
+ 
+-m4_include([ax_compare_version.m4])
+-m4_include([ax_prog_ruby_version.m4])
+-m4_include([ax_ruby_devel.m4])
+-
+ targetname=modname
+ mod_cflags=
+ mod_ldflags=

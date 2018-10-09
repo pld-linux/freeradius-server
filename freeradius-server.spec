@@ -16,12 +16,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	2.2.10
-Release:	7
+Version:	3.0.17
+Release:	0.1
 License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	f1ce12d2b8258585cb3d525f5bdfeb17
+# Source0-md5:	1f4ad38f32101a7d50d818afa6f17339
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -34,10 +34,11 @@ Patch4:		%{name}-heimdal.patch
 Patch5:		%{name}-rubyhdrs.patch
 # Patch taken from http://download.ag-projects.com/CDRTool/contrib/freeradius-brandinger/
 Patch6:		failed_calls_accounting.patch
-Patch7:		http://eduroam.pl/Dokumentacja/cui-fr-2.2.0.patch
+#Patch7:		http://eduroam.pl/Dokumentacja/cui-fr-2.2.0.patch
 Patch8:		format-security.patch
 Patch9:		am.patch
 Patch10:	%{name}-oracle.patch
+Patch11:	aclocal.patch
 URL:		http://www.freeradius.org/
 %{?with_firebird:BuildRequires:	Firebird-devel}
 BuildRequires:	autoconf >= 2.59
@@ -48,10 +49,11 @@ BuildRequires:	gdbm-devel
 BuildRequires:	heimdal-devel
 %endif
 %{?with_redis:BuildRequires:	hiredis-devel}
+BuildRequires:	json-c-devel
 %if %{with kerberos5} && %{with krb5}
 BuildRequires:	krb5-devel
 %endif
-%{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel}
+%{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel >= 0.2.1-5}
 BuildRequires:	libltdl-devel
 BuildRequires:	libpcap-devel
 BuildRequires:	libtool
@@ -329,19 +331,19 @@ Baza danych MIB dla serwera FreeRADIUS.
 
 %prep
 %setup -q
+
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
+#%patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch5 -p1
+#%patch4 -p1
+#%patch5 -p1
 %{?with_failed_calls_acc:%patch6 -p0}
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-
-%{__rm} aclocal.m4 libtool.m4
+#%patch7 -p1
+#%patch8 -p1
+#%patch9 -p1
+#%patch10 -p1
+%patch11 -p1
 
 %build
 # Keep it for future when ac/am regeneration will be ok
@@ -349,7 +351,7 @@ TOPDIR="$(pwd)"
 find -name 'configure.[ia][nc]' -type f | while read FILE; do
 	cd $(dirname "$FILE")
 	grep -q 'A[CM]_PROG_LIBTOOL' configure.[ia][nc] && %{__libtoolize}
-	%{__aclocal} -I "$TOPDIR"
+	%{__aclocal} -I "$TOPDIR" -I "$TOPDIR/m4" $(if [ -d m4 ] ; then echo "-I m4" ; fi)
 	%{__autoconf}
 	[ -f config.h.in ] && %{__autoheader}
 	cd -
@@ -384,7 +386,9 @@ done
 	--without-rlm_sql_db2 \
 	%{!?with_firebird:--without-rlm_sql_firebird} \
 	--without-rlm_sql_iodbc \
-	%{!?with_oci:--without-rlm_sql_oracle}
+	%{!?with_oci:--without-rlm_sql_oracle} \
+	--without-rlm_couchbase \
+	--without-rlm_securid
 
 %{__make} -j1
 
@@ -404,19 +408,18 @@ install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/radius
 install %{SOURCE4} $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/%{name}.conf
 
 # Install mibs:
-install mibs/FREERADIUS-*.txt $RPM_BUILD_ROOT%{mibdir}
+install mibs/FREERADIUS-*.mib $RPM_BUILD_ROOT%{mibdir}
 
 # Cleanups:
 %{__rm} $RPM_BUILD_ROOT%{_libdir}/*.la \
 	$RPM_BUILD_ROOT%{_sbindir}/rc.*
-%{__rm} -r $RPM_BUILD_ROOT%{_docdir}/freeradius \
-	%{!?with_oci:$RPM_BUILD_ROOT%{_sysconfdir}/raddb/sql/oracle}
+%{__rm} -r $RPM_BUILD_ROOT%{_docdir}/freeradius
 
 # prepare cleaned up docs for rpm
 install -d docs-rpm
 cp -a doc scripts docs-rpm
-%{__rm} docs-rpm/doc/{.gitignore,CYGWIN.rst,DIFFS.rst,MACOSX,OS2,Makefile*,examples/Makefile,rfc/{Makefile,update.sh,*.pl}}
-%{__rm} docs-rpm/scripts/{.gitignore,Makefile,*.in,radsqlrelay,radwatch,raddebug,cryptpasswd}
+%{__rm} docs-rpm/doc/{.gitignore,Makefile*,rfc/{Makefile,update.sh,*.pl}}
+%{__rm} docs-rpm/scripts/{.gitignore,*.in,raddebug,cryptpasswd}
 %{__rm} -r docs-rpm/scripts/solaris
 
 %clean
