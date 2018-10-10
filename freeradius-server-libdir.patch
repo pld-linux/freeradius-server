@@ -1,6 +1,6 @@
-diff -dur -x '*~' -x '*.orig' -x '*.rej' freeradius-server-3.0.17.orig/raddb/radiusd.conf.in freeradius-server-3.0.17/raddb/radiusd.conf.in
---- freeradius-server-3.0.17.orig/raddb/radiusd.conf.in	2018-10-09 14:36:25.000000000 +0200
-+++ freeradius-server-3.0.17/raddb/radiusd.conf.in	2018-10-09 14:37:15.000000000 +0200
+diff -dur -x '*~' freeradius-server-3.0.17.orig/raddb/radiusd.conf.in freeradius-server-3.0.17/raddb/radiusd.conf.in
+--- freeradius-server-3.0.17.orig/raddb/radiusd.conf.in	2018-10-10 10:12:41.000000000 +0200
++++ freeradius-server-3.0.17/raddb/radiusd.conf.in	2018-10-10 10:13:24.000000000 +0200
 @@ -105,7 +105,7 @@
  #	make
  #	make install
@@ -10,9 +10,25 @@ diff -dur -x '*~' -x '*.orig' -x '*.rej' freeradius-server-3.0.17.orig/raddb/rad
  
  #  pidfile: Where to place the PID of the RADIUS server.
  #
-diff -dur -x '*~' -x '*.orig' -x '*.rej' freeradius-server-3.0.17.orig/src/main/mainconfig.c freeradius-server-3.0.17/src/main/mainconfig.c
+diff -dur -x '*~' freeradius-server-3.0.17.orig/scripts/install.mk freeradius-server-3.0.17/scripts/install.mk
+--- freeradius-server-3.0.17.orig/scripts/install.mk	2018-04-17 19:12:27.000000000 +0200
++++ freeradius-server-3.0.17/scripts/install.mk	2018-10-10 10:19:46.000000000 +0200
+@@ -141,7 +141,11 @@
+         endif
+     else
+         ifeq "$${TGT_INSTALLDIR}" ".."
+-            TGT_INSTALLDIR := $${libdir}
++	    ifneq (,$(filter lib%,${1}))
++            	TGT_INSTALLDIR := $${libdir}
++	    else
++            	TGT_INSTALLDIR := $${libdir}/freeradius
++	    endif
+         endif
+     endif
+ 
+diff -dur -x '*~' freeradius-server-3.0.17.orig/src/main/mainconfig.c freeradius-server-3.0.17/src/main/mainconfig.c
 --- freeradius-server-3.0.17.orig/src/main/mainconfig.c	2018-04-17 19:12:27.000000000 +0200
-+++ freeradius-server-3.0.17/src/main/mainconfig.c	2018-10-09 14:39:21.000000000 +0200
++++ freeradius-server-3.0.17/src/main/mainconfig.c	2018-10-10 10:13:24.000000000 +0200
 @@ -183,7 +183,7 @@
  	{ "sbindir", FR_CONF_POINTER(PW_TYPE_STRING, &sbindir), "${prefix}/sbin"},
  	{ "logdir", FR_CONF_POINTER(PW_TYPE_STRING, &radlog_dir), "${localstatedir}/log"},
