@@ -60,6 +60,7 @@ BuildRequires:	rpm-perlprov
 BuildRequires:	rpmbuild(macros) >= 1.268
 %{?with_ruby:BuildRequires:	ruby-devel >= 1.8}
 BuildRequires:	sqlite3-devel
+BuildRequires:	talloc-devel
 BuildRequires:	unixODBC-devel
 Requires(post,preun):	/sbin/chkconfig
 Requires(postun):	/usr/sbin/groupdel
