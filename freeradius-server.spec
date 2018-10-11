@@ -45,6 +45,7 @@ BuildRequires:	krb5-devel
 %endif
 %{?with_eap_ikev2:BuildRequires:	libeap-ikev2-devel >= 0.2.1-5}
 BuildRequires:	libltdl-devel
+BuildRequires:	libmemcached-devel
 BuildRequires:	libpcap-devel
 BuildRequires:	libtool
 BuildRequires:	mysql-devel
