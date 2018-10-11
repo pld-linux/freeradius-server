@@ -2,7 +2,7 @@
 # Conditional build:
 %bcond_without	ldap			# rlm_ldap extension module
 %bcond_without	firebird		# rlm_sql_firebird extension module
-%bcond_without	eap_ikev2		# rlm_eap_ikev2 extension module
+%bcond_with	eap_ikev2		# rlm_eap_ikev2 extension module
 %bcond_without	kerberos5		# rlm_krb5 extension module
 %bcond_with	krb5			# use MIT Kerberos instead of heimdal
 %bcond_with	oci			# Oracle SQL extension module
