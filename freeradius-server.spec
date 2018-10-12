@@ -34,6 +34,7 @@ URL:		http://www.freeradius.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake
 BuildRequires:	cyrus-sasl-devel
+BuildRequires:	freetds-devel
 BuildRequires:	gdbm-devel
 %if %{with kerberos5} && %{without krb5}
 BuildRequires:	heimdal-devel
