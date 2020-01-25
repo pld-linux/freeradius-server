@@ -10,7 +10,6 @@
 %bcond_without	redis			# rlm_redis and rlm_rediswho extension modules
 %bcond_without	ruby			# rlm_ruby extension module
 #
-%include	/usr/lib/rpm/macros.perl
 #
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
