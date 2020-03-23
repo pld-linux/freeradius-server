@@ -14,12 +14,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	3.0.17
-Release:	7
+Version:	3.0.20
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	1f4ad38f32101a7d50d818afa6f17339
+# Source0-md5:	6128da73232aa2d6a408b910de2bd7ec
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -49,6 +49,7 @@ BuildRequires:	libmemcached-devel
 BuildRequires:	libpcap-devel
 BuildRequires:	libtool
 BuildRequires:	mysql-devel
+BuildRequires:	mongo-c-driver-devel
 %{?with_oci:%{?with_instantclient:BuildRequires:	oracle-instantclient-devel >= 9}}
 %{?with_ldap:BuildRequires:	openldap-devel}
 BuildRequires:	openssl-devel >= 0.9.7
@@ -62,6 +63,7 @@ BuildRequires:	rpmbuild(macros) >= 1.268
 %{?with_ruby:BuildRequires:	ruby-devel >= 1.8}
 BuildRequires:	sqlite3-devel
 BuildRequires:	talloc-devel
+BuildRequires:	unbound-devel
 BuildRequires:	unixODBC-devel
 Requires(post,preun):	/sbin/chkconfig
 Requires(postun):	/usr/sbin/groupdel
@@ -318,6 +320,14 @@ Baza danych MIB dla serwera FreeRADIUS.
 %patch2 -p1
 %patch3 -p1
 
+%{__sed } -E -i -e '1s,#!\s*/usr/bin/env\s+python(\s|$),#!%{__python}\1,' \
+      src/modules/rlm_python/example.py \
+      src/modules/rlm_python/radiusd.py
+
+%{__sed } -E -i -e '1s,#!\s*/usr/bin/env\s+python3(\s|$),#!%{__python3}\1,' \
+      src/modules/rlm_python3/example.py \
+      src/modules/rlm_python3/radiusd.py
+
 %build
 # Keep it for future when ac/am regeneration will be ok
 TOPDIR="$(pwd)"
@@ -380,6 +390,9 @@ install %{SOURCE1} $RPM_BUILD_ROOT/etc/logrotate.d/%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/pam.d/radius
 install %{SOURCE4} $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/%{name}.conf
+
+%{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+python2(\s|$),#!%{__python}\1,' \
+      $RPM_BUILD_ROOT%{_sysconfdir}/raddb/mods-config/python/*.py
 
 # Install mibs:
 install mibs/FREERADIUS-*.mib $RPM_BUILD_ROOT%{mibdir}
