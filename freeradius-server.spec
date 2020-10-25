@@ -5,7 +5,10 @@
 %bcond_with	eap_ikev2		# rlm_eap_ikev2 extension module
 %bcond_without	kerberos5		# rlm_krb5 extension module
 %bcond_with	krb5			# use MIT Kerberos instead of heimdal
+%bcond_without	mongo			# Mongo SQL extension module
 %bcond_with	oci			# Oracle SQL extension module
+%bcond_without	python2			# Python 2 extension module
+%bcond_without	python3			# Python 3 extension module
 %bcond_without	instantclient		# build Oracle SQL extension module against oracle-instantclient package
 %bcond_without	redis			# rlm_redis and rlm_rediswho extension modules
 %bcond_without	ruby			# rlm_ruby extension module
@@ -14,12 +17,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	3.0.20
-Release:	2
+Version:	3.0.21
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	6128da73232aa2d6a408b910de2bd7ec
+# Source0-md5:	8b7f794f2ac0d686d9aecfa083a63614
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -49,14 +52,15 @@ BuildRequires:	libmemcached-devel
 BuildRequires:	libpcap-devel
 BuildRequires:	libtool
 BuildRequires:	mysql-devel
-BuildRequires:	mongo-c-driver-devel
+%{?with_mongo:BuildRequires:	mongo-c-driver-devel}
 %{?with_oci:%{?with_instantclient:BuildRequires:	oracle-instantclient-devel >= 9}}
 %{?with_ldap:BuildRequires:	openldap-devel}
 BuildRequires:	openssl-devel >= 0.9.7
 BuildRequires:	pam-devel
 BuildRequires:	perl-devel
 BuildRequires:	postgresql-devel
-BuildRequires:	python-devel >= 2.3
+%{?with_python2:BuildRequires:	python-devel >= 1:2.6}
+%{?with_python3:BuildRequires:	python3-devel >= 1:3.2}
 BuildRequires:	readline-devel
 BuildRequires:	rpm-perlprov
 BuildRequires:	rpmbuild(macros) >= 1.268
@@ -172,6 +176,18 @@ Python module for FreeRADIUS server.
 %description module-python -l pl.UTF-8
 Moduł Python do serwera FreeRADIUS.
 
+%package module-python3
+Summary:	Python 3 module for FreeRADIUS server
+Summary(pl.UTF-8):	Moduł Python 3 do serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-python3
+Python 3 module for FreeRADIUS server.
+
+%description module-python3 -l pl.UTF-8
+Moduł Python 3 do serwera FreeRADIUS.
+
 %package module-redis
 Summary:	Redis and RedisWho modules for FreeRADIUS server
 Summary(pl.UTF-8):	Moduł Redis i RedisWho do serwera FreeRADIUS
@@ -208,6 +224,18 @@ Firebird driver for FreeRADIUS server SQL module.
 
 %description module-sql-firebird -l pl.UTF-8
 Sterownik Firebird dla modułu SQL serwera FreeRADIUS.
+
+%package module-sql-mongo
+Summary:	Mongo driver for FreeRADIUS server SQL module
+Summary(pl.UTF-8):	Sterownik Mongo dla modułu SQL serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-sql-mongo
+Mongo driver for FreeRADIUS server SQL module.
+
+%description module-sql-mongo -l pl.UTF-8
+Sterownik Mongo dla modułu SQL serwera FreeRADIUS.
 
 %package module-sql-mysql
 Summary:	MySQL driver for FreeRADIUS server SQL module
@@ -363,11 +391,14 @@ done
 	%{!?with_kerberos5:--without-rlm_krb5} \
 	%{!?with_ldap:--without-rlm_ldap} \
 	--without-rlm_opendirectory \
+	%{!?with_python2:--without-rlm_python} \
+	%{!?with_python3:--without-rlm_python3} \
 	%{!?with_redis:--without-rlm_redis} \
 	%{!?with_redis:--without-rlm_rediswho} \
 	%{!?with_ruby:--without-rlm_ruby} \
 	--without-rlm_sql_db2 \
 	%{!?with_firebird:--without-rlm_sql_firebird} \
+	%{!?with_mongo:--without-rlm_sql_mongo} \
 	--without-rlm_sql_iodbc \
 	%{!?with_oci:--without-rlm_sql_oracle} \
 	--without-rlm_couchbase \
@@ -471,9 +502,11 @@ fi
 %module_scripts module-pam
 %module_scripts module-perl
 %module_scripts module-python
+%module_scripts module-python3
 %module_scripts module-redis
 %module_scripts module-ruby
 %module_scripts module-sql-firebird
+%module_scripts module-sql-mongo
 %module_scripts module-sql-mysql
 %module_scripts module-sql-oracle
 %module_scripts module-sql-postgresql
@@ -505,100 +538,104 @@ fi
 %attr(755,root,root) %{_sbindir}/radiusd
 %attr(755,root,root) %{_sbindir}/radmin
 %dir %{_libdir}/freeradius
-%attr(755,root,root) %{_libdir}/freeradius/proto_dhcp*.so
-%{_libdir}/freeradius/proto_dhcp*.la
-%attr(755,root,root) %{_libdir}/freeradius/proto_vmps*.so
-%{_libdir}/freeradius/proto_vmps*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_always*.so
-%{_libdir}/freeradius/rlm_always*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter*.so
-%{_libdir}/freeradius/rlm_attr_filter*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_cache*.so
-%{_libdir}/freeradius/rlm_cache*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_chap*.so
-%{_libdir}/freeradius/rlm_chap*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_counter*.so
-%{_libdir}/freeradius/rlm_counter*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_cram*.so
-%{_libdir}/freeradius/rlm_cram*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_date*.so
-%{_libdir}/freeradius/rlm_date*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_detail*.so
-%{_libdir}/freeradius/rlm_detail*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_dhcp*.so
-%{_libdir}/freeradius/rlm_dhcp*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_digest*.so
-%{_libdir}/freeradius/rlm_digest*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_dynamic_clients*.so
-%{_libdir}/freeradius/rlm_dynamic_clients*.la
+%attr(755,root,root) %{_libdir}/freeradius/proto_dhcp.so
+%{_libdir}/freeradius/proto_dhcp.la
+%attr(755,root,root) %{_libdir}/freeradius/proto_vmps.so
+%{_libdir}/freeradius/proto_vmps.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_always.so
+%{_libdir}/freeradius/rlm_always.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_attr_filter.so
+%{_libdir}/freeradius/rlm_attr_filter.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cache.so
+%{_libdir}/freeradius/rlm_cache.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cache_memcached.so
+%{_libdir}/freeradius/rlm_cache_memcached.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cache_rbtree.so
+%{_libdir}/freeradius/rlm_cache_rbtree.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_chap.so
+%{_libdir}/freeradius/rlm_chap.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_counter.so
+%{_libdir}/freeradius/rlm_counter.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_cram.so
+%{_libdir}/freeradius/rlm_cram.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_date.so
+%{_libdir}/freeradius/rlm_date.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_detail.so
+%{_libdir}/freeradius/rlm_detail.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dhcp.so
+%{_libdir}/freeradius/rlm_dhcp.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_digest.so
+%{_libdir}/freeradius/rlm_digest.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_dynamic_clients.so
+%{_libdir}/freeradius/rlm_dynamic_clients.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_eap*.so
 %{_libdir}/freeradius/rlm_eap*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_example*.so
-%{_libdir}/freeradius/rlm_example*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_exec*.so
-%{_libdir}/freeradius/rlm_exec*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_expiration*.so
-%{_libdir}/freeradius/rlm_expiration*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_expr*.so
-%{_libdir}/freeradius/rlm_expr*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_files*.so
-%{_libdir}/freeradius/rlm_files*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_idn*.so
-%{_libdir}/freeradius/rlm_idn*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_ippool*.so
-%{_libdir}/freeradius/rlm_ippool*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_linelog*.so
-%{_libdir}/freeradius/rlm_linelog*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_logintime*.so
-%{_libdir}/freeradius/rlm_logintime*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_mschap*.so
-%{_libdir}/freeradius/rlm_mschap*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_pap*.so
-%{_libdir}/freeradius/rlm_pap*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_passwd*.so
-%{_libdir}/freeradius/rlm_passwd*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_preprocess*.so
-%{_libdir}/freeradius/rlm_preprocess*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp*.so
-%{_libdir}/freeradius/rlm_radutmp*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_realm*.so
-%{_libdir}/freeradius/rlm_realm*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_replicate*.so
-%{_libdir}/freeradius/rlm_replicate*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_rest*.so
-%{_libdir}/freeradius/rlm_rest*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp*.so
-%{_libdir}/freeradius/rlm_smsotp*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_soh*.so
-%{_libdir}/freeradius/rlm_soh*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sometimes*.so
-%{_libdir}/freeradius/rlm_sometimes*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_example.so
+%{_libdir}/freeradius/rlm_example.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_exec.so
+%{_libdir}/freeradius/rlm_exec.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expiration.so
+%{_libdir}/freeradius/rlm_expiration.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_expr.so
+%{_libdir}/freeradius/rlm_expr.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_files.so
+%{_libdir}/freeradius/rlm_files.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_idn.so
+%{_libdir}/freeradius/rlm_idn.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ippool.so
+%{_libdir}/freeradius/rlm_ippool.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_linelog.so
+%{_libdir}/freeradius/rlm_linelog.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_logintime.so
+%{_libdir}/freeradius/rlm_logintime.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_mschap.so
+%{_libdir}/freeradius/rlm_mschap.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pap.so
+%{_libdir}/freeradius/rlm_pap.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_passwd.so
+%{_libdir}/freeradius/rlm_passwd.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_preprocess.so
+%{_libdir}/freeradius/rlm_preprocess.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_radutmp.so
+%{_libdir}/freeradius/rlm_radutmp.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_realm.so
+%{_libdir}/freeradius/rlm_realm.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_replicate.so
+%{_libdir}/freeradius/rlm_replicate.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_rest.so
+%{_libdir}/freeradius/rlm_rest.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_smsotp.so
+%{_libdir}/freeradius/rlm_smsotp.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_soh.so
+%{_libdir}/freeradius/rlm_soh.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sometimes.so
+%{_libdir}/freeradius/rlm_sometimes.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sql.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_freetds*.so
-%{_libdir}/freeradius/rlm_sql_freetds*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_null*.so
-%{_libdir}/freeradius/rlm_sql_null*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter*.so
-%{_libdir}/freeradius/rlm_sqlcounter*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool*.so
-%{_libdir}/freeradius/rlm_sqlhpwippool*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlippool*.so
-%{_libdir}/freeradius/rlm_sqlippool*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_test*.so
-%{_libdir}/freeradius/rlm_test*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_unbound*.so
-%{_libdir}/freeradius/rlm_unbound*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_unix*.so
-%{_libdir}/freeradius/rlm_unix*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_unpack*.so
-%{_libdir}/freeradius/rlm_unpack*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_utf8*.so
-%{_libdir}/freeradius/rlm_utf8*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_wimax*.so
-%{_libdir}/freeradius/rlm_wimax*.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_yubikey*.so
-%{_libdir}/freeradius/rlm_yubikey*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_freetds.so
+%{_libdir}/freeradius/rlm_sql_freetds.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_null.so
+%{_libdir}/freeradius/rlm_sql_null.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter.so
+%{_libdir}/freeradius/rlm_sqlcounter.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlhpwippool.so
+%{_libdir}/freeradius/rlm_sqlhpwippool.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sqlippool.so
+%{_libdir}/freeradius/rlm_sqlippool.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_test.so
+%{_libdir}/freeradius/rlm_test.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unbound.so
+%{_libdir}/freeradius/rlm_unbound.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unix.so
+%{_libdir}/freeradius/rlm_unix.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unpack.so
+%{_libdir}/freeradius/rlm_unpack.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_utf8.so
+%{_libdir}/freeradius/rlm_utf8.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_wimax.so
+%{_libdir}/freeradius/rlm_wimax.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_yubikey.so
+%{_libdir}/freeradius/rlm_yubikey.la
 %{_datadir}/freeradius
 %{_mandir}/man1/dhcpclient.1*
 %{_mandir}/man1/rad_counter.1*
@@ -645,7 +682,7 @@ fi
 %attr(771,root,radius) %dir %{_var}/log/archive/freeradius
 %attr(771,root,radius) %dir %{_var}/log/archive/freeradius/radacct
 %attr(775,root,radius) %dir /var/run/freeradius
-/usr/lib/tmpfiles.d/%{name}.conf
+%{systemdtmpfilesdir}/%{name}.conf
 %defattr(640,root,radius,750)
 %dir %{_sysconfdir}/raddb
 %doc %{_sysconfdir}/raddb/README.rst
@@ -656,6 +693,7 @@ fi
 %ghost %{_sysconfdir}/raddb/certs/02.pem
 %attr(755,root,root) %{_sysconfdir}/raddb/certs/bootstrap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/certs/ca.cnf
+%ghost %{_sysconfdir}/raddb/certs/ca.crl
 %ghost %{_sysconfdir}/raddb/certs/ca.der
 %ghost %{_sysconfdir}/raddb/certs/ca.key
 %ghost %{_sysconfdir}/raddb/certs/ca.pem
@@ -817,6 +855,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/policy.d/filter
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/policy.d/moonshot-targeted-ids
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/policy.d/operator-name
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/policy.d/rfc7542
 %dir %{_sysconfdir}/raddb/sites-available
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/sites-available/*
 %dir %{_sysconfdir}/raddb/sites-enabled
@@ -827,47 +866,60 @@ fi
 %files module-krb5
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/krb5
-%attr(755,root,root) %{_libdir}/freeradius/rlm_krb5*.so
-%{_libdir}/freeradius/rlm_krb5*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_krb5.so
+%{_libdir}/freeradius/rlm_krb5.la
 %endif
 
 %if %{with ldap}
 %files module-ldap
 %defattr(644,root,root,755)
 %attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/ldap
-%attr(755,root,root) %{_libdir}/freeradius/rlm_ldap*.so
-%{_libdir}/freeradius/rlm_ldap*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ldap.so
+%{_libdir}/freeradius/rlm_ldap.la
 %endif
 
 %files module-otp
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/otp
-%attr(755,root,root) %{_libdir}/freeradius/rlm_otp*.so
-%{_libdir}/freeradius/rlm_otp*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_otp.so
+%{_libdir}/freeradius/rlm_otp.la
 
 %files module-pam
 %defattr(644,root,root,755)
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/pam
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/pam.d/radius
-%attr(755,root,root) %{_libdir}/freeradius/rlm_pam*.so
-%{_libdir}/freeradius/rlm_pam*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_pam.so
+%{_libdir}/freeradius/rlm_pam.la
 
 %files module-perl
 %defattr(644,root,root,755)
 %dir %{_sysconfdir}/raddb/mods-config/perl
 %attr(755,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/perl/example.pl
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/perl
-%attr(755,root,root) %{_libdir}/freeradius/rlm_perl*.so
-%{_libdir}/freeradius/rlm_perl*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_perl.so
+%{_libdir}/freeradius/rlm_perl.la
 
+%if %{with python2}
 %files module-python
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/raddb/mods-config/python
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/python
+%dir %{_sysconfdir}/raddb/mods-config/python
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/python/example.py
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/python/radiusd.py
-%attr(755,root,root) %{_libdir}/freeradius/rlm_python*.so
-%{_libdir}/freeradius/rlm_python*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_python.so
+%{_libdir}/freeradius/rlm_python.la
+%endif
+
+%if %{with python3}
+%files module-python3
+%defattr(644,root,root,755)
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/python3
+%dir %{_sysconfdir}/raddb/mods-config/python3
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/python3/example.py
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/python3/radiusd.py
+%attr(755,root,root) %{_libdir}/freeradius/rlm_python3.so
+%{_libdir}/freeradius/rlm_python3.la
+%endif
 
 %if %{with redis}
 %files module-redis
@@ -885,53 +937,113 @@ fi
 %defattr(644,root,root,755)
 %dir %{_sysconfdir}/raddb/mods-config/ruby
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/ruby/example.rb
-%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby*.so
-%{_libdir}/freeradius/rlm_ruby*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_ruby.so
+%{_libdir}/freeradius/rlm_ruby.la
 %endif
 
 %if %{with firebird}
 %files module-sql-firebird
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird*.so
-%{_libdir}/freeradius/rlm_sql_firebird*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_firebird.so
+%{_libdir}/freeradius/rlm_sql_firebird.la
+%endif
+
+%if %{with mongo}
+%files module-sql-mongo
+%defattr(644,root,root,755)
+%dir %{_sysconfdir}/raddb/mods-config/sql/*/mongo
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/mongo/queries.conf
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_mongo.so
+%{_libdir}/freeradius/rlm_sql_mongo.la
 %endif
 
 %files module-sql-mysql
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/raddb/mods-config/sql/*/mysql
-%dir %{_sysconfdir}/raddb/mods-config/sql/*/ndb
-%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/mysql/*
-%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/ndb/*
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_mysql*.so
-%{_libdir}/freeradius/rlm_sql_mysql*.la
+%dir %{_sysconfdir}/raddb/mods-config/sql/counter/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/counter/mysql/*.conf
+%dir %{_sysconfdir}/raddb/mods-config/sql/cui/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/mysql/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/mysql/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/mysql/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/mysql/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/mysql/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/mysql/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/mysql/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/mysql/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/mysql/extras
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/mysql/extras/wimax
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/mysql/extras/wimax/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/mysql/extras/wimax/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/ndb
+%doc %{_sysconfdir}/raddb/mods-config/sql/main/ndb/README
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/ndb/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/mysql
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/mysql/queries.conf
+%attr(640,root,radius) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/mysql/schema.sql
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_mysql.so
+%{_libdir}/freeradius/rlm_sql_mysql.la
 
 %if %{with oci}
 %files module-sql-oracle
 %defattr(644,root,root,755)
 %dir %{_sysconfdir}/raddb/mods-config/sql/*/oracle
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/oracle/*
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_oracle*.so
-%{_libdir}/freeradius/rlm_sql_oracle*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_oracle.so
+%{_libdir}/freeradius/rlm_sql_oracle.la
 %endif
 
 %files module-sql-postgresql
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/raddb/mods-config/sql/*/postgresql
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/postgresql/*
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_postgresql*.so
-%{_libdir}/freeradius/rlm_sql_postgresql*.la
+%dir %{_sysconfdir}/raddb/mods-config/sql/counter/postgresql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/counter/postgresql/*.conf
+%dir %{_sysconfdir}/raddb/mods-config/sql/cui/postgresql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/postgresql/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/postgresql/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool/postgresql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/postgresql/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/postgresql/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/postgresql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/postgresql/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/postgresql/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/postgresql/extras
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/postgresql/extras/cisco_h323_db_schema.sql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/postgresql/extras/voip-postpaid.conf
+%dir %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/postgresql
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/postgresql/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/postgresql/schema.sql
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_postgresql.so
+%{_libdir}/freeradius/rlm_sql_postgresql.la
 
 %files module-sql-sqlite
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/raddb/mods-config/sql/*/sqlite
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/sqlite/*
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite*.so
-%{_libdir}/freeradius/rlm_sql_sqlite*.la
+%dir %{_sysconfdir}/raddb/mods-config/sql/counter/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/counter/sqlite/*.conf
+%dir %{_sysconfdir}/raddb/mods-config/sql/cui/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/sqlite/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/cui/sqlite/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/sqlite/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/sqlite/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/sqlite/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/sqlite/schema.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/sqlite/process-radacct-refresh.sh
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/sqlite/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/sqlite/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/sqlite
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/sqlite/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids/sqlite/schema.sql
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_sqlite.so
+%{_libdir}/freeradius/rlm_sql_sqlite.la
 
 %files module-sql-unixodbc
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_unixodbc*.so
-%{_libdir}/freeradius/rlm_sql_unixodbc*.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_unixodbc.so
+%{_libdir}/freeradius/rlm_sql_unixodbc.la
 
 %files libs
 %defattr(644,root,root,755)
