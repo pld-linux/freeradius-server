@@ -5,6 +5,7 @@
 %bcond_with	eap_ikev2		# rlm_eap_ikev2 extension module
 %bcond_without	kerberos5		# rlm_krb5 extension module
 %bcond_with	krb5			# use MIT Kerberos instead of heimdal
+%bcond_without	freetds			# FreeTDS SQL extension module
 %bcond_without	mongo			# Mongo SQL extension module
 %bcond_with	oci			# Oracle SQL extension module
 %bcond_without	python2			# Python 2 extension module
@@ -12,7 +13,6 @@
 %bcond_without	instantclient		# build Oracle SQL extension module against oracle-instantclient package
 %bcond_without	redis			# rlm_redis and rlm_rediswho extension modules
 %bcond_without	ruby			# rlm_ruby extension module
-#
 #
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
@@ -50,6 +50,8 @@ BuildRequires:	krb5-devel
 BuildRequires:	libltdl-devel
 BuildRequires:	libmemcached-devel
 BuildRequires:	libpcap-devel
+# libwbclient for mschap module
+BuildRequires:	libsmbclient-devel
 BuildRequires:	libtool
 BuildRequires:	mysql-devel
 %{?with_mongo:BuildRequires:	mongo-c-driver-devel}
@@ -225,6 +227,18 @@ Firebird driver for FreeRADIUS server SQL module.
 %description module-sql-firebird -l pl.UTF-8
 Sterownik Firebird dla modułu SQL serwera FreeRADIUS.
 
+%package module-sql-freetds
+Summary:	FreeTDS driver for FreeRADIUS server SQL module
+Summary(pl.UTF-8):	Sterownik FreeTDS dla modułu SQL serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-sql-freetds
+FreeTDS driver for FreeRADIUS server SQL module.
+
+%description module-sql-freetds -l pl.UTF-8
+Sterownik FreeTDS dla modułu SQL serwera FreeRADIUS.
+
 %package module-sql-mongo
 Summary:	Mongo driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik Mongo dla modułu SQL serwera FreeRADIUS
@@ -300,6 +314,30 @@ UnixODBC driver for FreeRADIUS server SQL module.
 
 %description module-sql-unixodbc -l pl.UTF-8
 Sterownik UnixODBC dla modułu SQL serwera FreeRADIUS.
+
+%package module-unbound
+Summary:	Unbound module for FreeRADIUS server
+Summary(pl.UTF-8):	Moduł Unbound do serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-unbound
+Unbound module for FreeRADIUS server.
+
+%description module-unbound -l pl.UTF-8
+Moduł Unbound do serwera FreeRADIUS.
+
+%package module-yubikey
+Summary:	Yubikey module for FreeRADIUS server
+Summary(pl.UTF-8):	Moduł Yubikey do serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-yubikey
+Yubikey module for FreeRADIUS server.
+
+%description module-yubikey -l pl.UTF-8
+Moduł Yubikey do serwera FreeRADIUS.
 
 %package libs
 Summary:	FreeRADIUS server libraries
@@ -398,13 +436,15 @@ done
 	%{!?with_ruby:--without-rlm_ruby} \
 	--without-rlm_sql_db2 \
 	%{!?with_firebird:--without-rlm_sql_firebird} \
+	%{!?with_freetds:--without-rlm_sql_freetds} \
 	%{!?with_mongo:--without-rlm_sql_mongo} \
 	--without-rlm_sql_iodbc \
 	%{!?with_oci:--without-rlm_sql_oracle} \
 	--without-rlm_couchbase \
 	--without-rlm_securid
 
-%{__make} -j1
+%{__make} -j1 \
+	VERBOSE=1
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -415,7 +455,8 @@ install -d $RPM_BUILD_ROOT/etc/{logrotate.d,rc.d/init.d,pam.d} \
 	$RPM_BUILD_ROOT/usr/lib/tmpfiles.d
 
 %{__make} -j1 install \
-	R=$RPM_BUILD_ROOT
+	R=$RPM_BUILD_ROOT \
+	VERBOSE=1
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/logrotate.d/%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/%{name}
@@ -612,8 +653,6 @@ fi
 %{_libdir}/freeradius/rlm_sometimes.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sql.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_freetds.so
-%{_libdir}/freeradius/rlm_sql_freetds.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_sql_null.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter.so
@@ -624,8 +663,6 @@ fi
 %{_libdir}/freeradius/rlm_sqlippool.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_test.so
 %{_libdir}/freeradius/rlm_test.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_unbound.so
-%{_libdir}/freeradius/rlm_unbound.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_unix.so
 %{_libdir}/freeradius/rlm_unix.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_unpack.so
@@ -634,8 +671,6 @@ fi
 %{_libdir}/freeradius/rlm_utf8.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_wimax.so
 %{_libdir}/freeradius/rlm_wimax.la
-%attr(755,root,root) %{_libdir}/freeradius/rlm_yubikey.so
-%{_libdir}/freeradius/rlm_yubikey.la
 %{_datadir}/freeradius
 %{_mandir}/man1/dhcpclient.1*
 %{_mandir}/man1/rad_counter.1*
@@ -665,7 +700,6 @@ fi
 %{_mandir}/man5/rlm_passwd.5*
 %{_mandir}/man5/rlm_realm.5*
 %{_mandir}/man5/rlm_sql.5*
-%{_mandir}/man5/rlm_unbound.5*
 %{_mandir}/man5/rlm_unix.5*
 %{_mandir}/man5/unlang.5*
 %{_mandir}/man5/users.5*
@@ -782,12 +816,10 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/sqlcounter
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/sqlippool
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/sradutmp
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/unbound
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/unix
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/unpack
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/utf8
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/wimax
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/yubikey
 %dir %{_sysconfdir}/raddb/mods-config
 %doc %{_sysconfdir}/raddb/mods-config/README.rst
 %dir %{_sysconfdir}/raddb/mods-config/attr_filter
@@ -810,8 +842,6 @@ fi
 %dir %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp
 %dir %{_sysconfdir}/raddb/mods-config/sql/main
 %dir %{_sysconfdir}/raddb/mods-config/sql/moonshot-targeted-ids
-%dir %{_sysconfdir}/raddb/mods-config/unbound
-%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/unbound/default.conf
 %dir %{_sysconfdir}/raddb/mods-enabled
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/always
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/attr_filter
@@ -948,6 +978,13 @@ fi
 %{_libdir}/freeradius/rlm_sql_firebird.la
 %endif
 
+%if %{with freetds}
+%files module-sql-freetds
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_freetds.so
+%{_libdir}/freeradius/rlm_sql_freetds.la
+%endif
+
 %if %{with mongo}
 %files module-sql-mongo
 %defattr(644,root,root,755)
@@ -989,8 +1026,15 @@ fi
 %if %{with oci}
 %files module-sql-oracle
 %defattr(644,root,root,755)
-%dir %{_sysconfdir}/raddb/mods-config/sql/*/oracle
-%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/*/oracle/*
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/oracle
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/oracle/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool-dhcp/oracle/*.sql
+%dir %{_sysconfdir}/raddb/mods-config/sql/main/oracle
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/oracle/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/main/oracle/*.sql
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_oracle.so
 %{_libdir}/freeradius/rlm_sql_oracle.la
 %endif
@@ -1044,6 +1088,21 @@ fi
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_unixodbc.so
 %{_libdir}/freeradius/rlm_sql_unixodbc.la
+
+%files module-unbound
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_unbound.so
+%{_libdir}/freeradius/rlm_unbound.la
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/unbound
+%dir %{_sysconfdir}/raddb/mods-config/unbound
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/unbound/default.conf
+%{_mandir}/man5/rlm_unbound.5*
+
+%files module-yubikey
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_yubikey.so
+%{_libdir}/freeradius/rlm_yubikey.la
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/yubikey
 
 %files libs
 %defattr(644,root,root,755)
