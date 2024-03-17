@@ -3,6 +3,7 @@
 %bcond_without	ldap			# rlm_ldap extension module
 %bcond_without	firebird		# rlm_sql_firebird extension module
 %bcond_with	eap_ikev2		# rlm_eap_ikev2 extension module
+%bcond_with	ibmdb2			# rlm_sql_db2 extension module
 %bcond_without	kerberos5		# rlm_krb5 extension module
 %bcond_with	krb5			# use MIT Kerberos instead of heimdal
 %bcond_without	freetds			# FreeTDS SQL extension module
@@ -43,6 +44,7 @@ BuildRequires:	gdbm-devel
 BuildRequires:	heimdal-devel
 %endif
 %{?with_redis:BuildRequires:	hiredis-devel}
+%{?with_ibmdb2:BuildRequires:	ibm-db2-clidriver-devel}
 BuildRequires:	json-c-devel
 %if %{with kerberos5} && %{with krb5}
 BuildRequires:	krb5-devel
@@ -216,12 +218,24 @@ Ruby module for FreeRADIUS server.
 %description module-ruby -l pl.UTF-8
 Moduł Ruby do serwera FreeRADIUS.
 
+%package module-sql-db2
+Summary:	IBM DB2 driver for FreeRADIUS server SQL module
+Summary(pl.UTF-8):	Sterownik IBM DB2 dla modułu SQL serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-sql-db2
+IBM DB2 driver for FreeRADIUS server SQL module.
+
+%description module-sql-db2 -l pl.UTF-8
+Sterownik IBM DB2 dla modułu SQL serwera FreeRADIUS.
+
 %package module-sql-firebird
 Summary:	Firebird driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik Firebird dla modułu SQL serwera FreeRADIUS
 Group:		Networking/Daemons/Radius
 Requires:	%{name} = %{version}-%{release}
-Obsoletes:	freeradius-server-module-sql_firebird
+Obsoletes:	freeradius-server-module-sql_firebird < 2.2.6
 
 %description module-sql-firebird
 Firebird driver for FreeRADIUS server SQL module.
@@ -258,7 +272,7 @@ Summary:	MySQL driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik MySQL dla modułu SQL serwera FreeRADIUS
 Group:		Networking/Daemons/Radius
 Requires:	%{name} = %{version}-%{release}
-Obsoletes:	freeradius-server-module-mysql
+Obsoletes:	freeradius-server-module-mysql < 2.2.6
 
 %description module-sql-mysql
 MySQL driver for FreeRADIUS server SQL module.
@@ -283,7 +297,7 @@ Summary:	PostgreSQL driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik PostgreSQL dla modułu SQL serwera FreeRADIUS
 Group:		Networking/Daemons/Radius
 Requires:	%{name} = %{version}-%{release}
-Obsoletes:	freeradius-server-module-postgresql
+Obsoletes:	freeradius-server-module-postgresql < 2.2.6
 
 %description module-sql-postgresql
 PostgreSQL driver for FreeRADIUS server SQL module.
@@ -296,7 +310,7 @@ Summary:	SQLite driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik SQLite dla modułu SQL serwera FreeRADIUS
 Group:		Networking/Daemons/Radius
 Requires:	%{name} = %{version}-%{release}
-Obsoletes:	freeradius-server-module-sqlite
+Obsoletes:	freeradius-server-module-sqlite < 2.2.6
 
 %description module-sql-sqlite
 SQLite driver for FreeRADIUS server SQL module.
@@ -309,7 +323,7 @@ Summary:	UnixODBC driver for FreeRADIUS server SQL module
 Summary(pl.UTF-8):	Sterownik UnixODBC dla modułu SQL serwera FreeRADIUS
 Group:		Networking/Daemons/Radius
 Requires:	%{name} = %{version}-%{release}
-Obsoletes:	freeradius-server-module-unixodbc
+Obsoletes:	freeradius-server-module-unixodbc < 2.2.6
 
 %description module-sql-unixodbc
 UnixODBC driver for FreeRADIUS server SQL module.
@@ -372,7 +386,7 @@ Summary(pl.UTF-8):	Baza danych MIB dla serwera FreeRADIUS
 Group:		Applications/System
 Requires:	mibs-dirs
 Suggests:	libsmi
-Obsoletes:	freeradius-server-mibs
+Obsoletes:	freeradius-server-mibs < 2.1.7-5
 
 %description -n mibs-%{name}
 MIB database for FreeRADIUS server.
@@ -422,6 +436,9 @@ done
 	%{!?with_krb5:--enable-heimdal-krb5} \
 	--enable-strict-dependencies \
 	--with-experimental-modules \
+%if %{with ibmdb2}
+	--with-ibmdb2-dir=%{_libdir}/clidriver \
+%endif
 	--with-logdir=%{_var}/log/freeradius \
 	%{?with_instantclient:--with-oracle-include-dir=/usr/include/oracle/client} \
 	--with-system-libltdl \
@@ -436,7 +453,7 @@ done
 	%{!?with_redis:--without-rlm_redis} \
 	%{!?with_redis:--without-rlm_rediswho} \
 	%{!?with_ruby:--without-rlm_ruby} \
-	--without-rlm_sql_db2 \
+	%{!?with_ibmdb2:--without-rlm_sql_db2} \
 	%{!?with_firebird:--without-rlm_sql_firebird} \
 	%{!?with_freetds:--without-rlm_sql_freetds} \
 	%{!?with_mongo:--without-rlm_sql_mongo} \
@@ -656,6 +673,8 @@ fi
 %{_libdir}/freeradius/rlm_sometimes.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sql.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_map.so
+%{_libdir}/freeradius/rlm_sql_map.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_sql_null.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_sqlcounter.so
@@ -666,6 +685,8 @@ fi
 %{_libdir}/freeradius/rlm_sqlippool.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_test.so
 %{_libdir}/freeradius/rlm_test.la
+%attr(755,root,root) %{_libdir}/freeradius/rlm_totp.so
+%{_libdir}/freeradius/rlm_totp.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_unix.so
 %{_libdir}/freeradius/rlm_unix.la
 %attr(755,root,root) %{_libdir}/freeradius/rlm_unpack.so
@@ -1002,6 +1023,13 @@ fi
 %{_libdir}/freeradius/rlm_ruby.la
 %endif
 
+%if %{with ibmdb2}
+%files module-sql-db2
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/freeradius/rlm_sql_db2.so
+%{_libdir}/freeradius/rlm_sql_db2.la
+%endif
+
 %if %{with firebird}
 %files module-sql-firebird
 %defattr(644,root,root,755)
@@ -1057,6 +1085,9 @@ fi
 %if %{with oci}
 %files module-sql-oracle
 %defattr(644,root,root,755)
+%dir %{_sysconfdir}/raddb/mods-config/sql/dhcp/oracle
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/dhcp/oracle/queries.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/dhcp/oracle/*.sql
 %dir %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle/queries.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/sql/ippool/oracle/*.sql
