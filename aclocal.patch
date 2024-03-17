@@ -1,30 +1,30 @@
-diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_perl/configure.ac freeradius-server-3.0.17/src/modules/rlm_perl/configure.ac
---- freeradius-server-3.0.17.orig/src/modules/rlm_perl/configure.ac	2018-04-17 19:12:27.000000000 +0200
-+++ freeradius-server-3.0.17/src/modules/rlm_perl/configure.ac	2018-10-09 15:03:14.000000000 +0200
-@@ -3,8 +3,6 @@
+diff -ruNp freeradius-server-3.0.26.orig/src/modules/rlm_perl/configure.ac freeradius-server-3.0.26/src/modules/rlm_perl/configure.ac
+--- freeradius-server-3.0.26.orig/src/modules/rlm_perl/configure.ac	2022-09-20 15:45:21.000000000 +0200
++++ freeradius-server-3.0.26/src/modules/rlm_perl/configure.ac	2024-03-16 13:07:14.915361570 +0100
+@@ -3,8 +3,6 @@ AC_INIT(rlm_perl.c)
  AC_REVISION($Revision$)
  AC_DEFUN(modname,[rlm_perl])
  
 -m4_include([ax_with_prog.m4])
 -
- if test x$with_[]modname != xno; then
- 	AC_PROG_CC
- 	AC_PROG_CPP
-diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_rest/configure.ac freeradius-server-3.0.17/src/modules/rlm_rest/configure.ac
---- freeradius-server-3.0.17.orig/src/modules/rlm_rest/configure.ac	2018-04-17 19:12:27.000000000 +0200
-+++ freeradius-server-3.0.17/src/modules/rlm_rest/configure.ac	2018-10-09 15:03:36.000000000 +0200
-@@ -3,7 +3,6 @@
+ AC_ARG_WITH([]modname,
+ [  --with-[]modname              build []modname. (default=yes)])
+ 
+diff -ruNp freeradius-server-3.0.26.orig/src/modules/rlm_rest/configure.ac freeradius-server-3.0.26/src/modules/rlm_rest/configure.ac
+--- freeradius-server-3.0.26.orig/src/modules/rlm_rest/configure.ac	2022-09-20 15:45:21.000000000 +0200
++++ freeradius-server-3.0.26/src/modules/rlm_rest/configure.ac	2024-03-16 13:07:40.157676622 +0100
+@@ -3,7 +3,6 @@ AC_INIT(rlm_rest.c)
  AC_REVISION($Revision$)
  AC_DEFUN(modname,[rlm_rest])
  AC_CONFIG_HEADER(config.h)
 -m4_include([m4/libcurl_check_config.m4])
  
- if test x$with_[]modname != xno; then
- 
-diff -dur -x '*~' freeradius-server-3.0.17.orig/src/modules/rlm_ruby/configure.ac freeradius-server-3.0.17/src/modules/rlm_ruby/configure.ac
---- freeradius-server-3.0.17.orig/src/modules/rlm_ruby/configure.ac	2018-04-17 19:12:27.000000000 +0200
-+++ freeradius-server-3.0.17/src/modules/rlm_ruby/configure.ac	2018-10-09 15:03:26.000000000 +0200
-@@ -3,16 +3,10 @@
+ AC_ARG_WITH([]modname,
+ [  --with-[]modname              build []modname. (default=yes)])
+diff -ruNp freeradius-server-3.0.26.orig/src/modules/rlm_ruby/configure.ac freeradius-server-3.0.26/src/modules/rlm_ruby/configure.ac
+--- freeradius-server-3.0.26.orig/src/modules/rlm_ruby/configure.ac	2022-09-20 15:45:21.000000000 +0200
++++ freeradius-server-3.0.26/src/modules/rlm_ruby/configure.ac	2024-03-16 13:08:21.789196226 +0100
+@@ -3,16 +3,10 @@ AC_INIT(rlm_ruby.c)
  AC_REVISION($Revision: 1.9 $)
  AC_DEFUN(modname,[rlm_ruby])
  
