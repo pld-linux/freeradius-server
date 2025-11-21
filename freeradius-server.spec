@@ -26,7 +26,7 @@ Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
 Version:	3.2.7
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
