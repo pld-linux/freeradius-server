@@ -10,6 +10,7 @@
 %bcond_with	eap_ikev2		# rlm_eap_ikev2 extension module
 %bcond_with	ibmdb2			# rlm_sql_db2 extension module
 %bcond_with	iodbc			# rlm_sql_iodbc instead of rlm_sql_unixodbc
+%bcond_without	kafka			# rlm_kafka extension module
 %bcond_without	kerberos5		# rlm_krb5 extension module
 %bcond_with	krb5			# use MIT Kerberos instead of heimdal
 %bcond_without	freetds			# FreeTDS SQL extension module
@@ -25,12 +26,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	3.2.7
-Release:	4
+Version:	3.2.8
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons/Radius
-Source0:	ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-# Source0-md5:	0e452e77226c9a1e87bd630b3eb768d2
+Source0:	https://www.freeradius.org/ftp/pub/freeradius/%{name}-%{version}.tar.bz2
+# Source0-md5:	1218b6f918bea87a22b8c3b5f14f2480
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -76,6 +77,7 @@ BuildRequires:	libidn-devel >= 1.42-1
 # for cache_memcached module
 BuildRequires:	libmemcached-devel
 BuildRequires:	libpcap-devel
+%{?with_kafka:BuildRequires:	librdkafka-devel}
 # libwbclient for mschap module
 BuildRequires:	libsmbclient-devel >= 1:4.2.1
 # for yubikey module
@@ -180,6 +182,18 @@ JSON module for FreeRADIUS server.
 
 %description module-json -l pl.UTF-8
 Moduł JSON do serwera FreeRADIUS.
+
+%package module-kafka
+Summary:	Kafka module for FreeRADIUS server
+Summary(pl.UTF-8):	Moduł Kafka do serwera FreeRADIUS
+Group:		Networking/Daemons/Radius
+Requires:	%{name} = %{version}-%{release}
+
+%description module-kafka
+Kafka module for FreeRADIUS server.
+
+%description module-kafka -l pl.UTF-8
+Moduł Kafka do serwera FreeRADIUS.
 
 %package module-ldap
 Summary:	LDAP module for FreeRADIUS server
@@ -497,6 +511,7 @@ done
 	--without-rlm_couchbase \
 	%{!?with_eap_ikev2:--without-rlm_eap_ikev2} \
 	--without-rlm_eap_tnc \
+	%{!?with_kafka:--without-rlm_kafka} \
 	%{!?with_kerberos5:--without-rlm_krb5} \
 	%{!?with_ldap:--without-rlm_ldap} \
 	--without-rlm_opendirectory \
@@ -963,6 +978,17 @@ fi
 %doc src/modules/rlm_json/README.md
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/json
 %attr(755,root,root) %{_libdir}/freeradius/rlm_json.so
+
+%if %{with kafka}
+%files module-kafka
+%defattr(644,root,root,755)
+%doc src/modules/rlm_kafka/README.md
+%dir %{_sysconfdir}/raddb/mods-config/kafka
+%attr(644,root,root) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-config/kafka/messages-json.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/kafka
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-available/kafka_async
+%attr(755,root,root) %{_libdir}/freeradius/rlm_kafka.so
+%endif
 
 %if %{with kerberos5}
 %files module-krb5
