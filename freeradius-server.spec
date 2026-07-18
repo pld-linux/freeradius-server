@@ -26,12 +26,12 @@
 Summary:	High-performance and highly configurable RADIUS server
 Summary(pl.UTF-8):	Szybki i wysoce konfigurowalny serwer RADIUS
 Name:		freeradius-server
-Version:	3.2.8
-Release:	2
+Version:	3.2.10
+Release:	1
 License:	GPL v2
 Group:		Networking/Daemons/Radius
 Source0:	https://www.freeradius.org/ftp/pub/freeradius/%{name}-%{version}.tar.bz2
-# Source0-md5:	1218b6f918bea87a22b8c3b5f14f2480
+# Source0-md5:	65a17574ecc36ee41825447bf3886c0e
 Source1:	%{name}.logrotate
 Source2:	%{name}.init
 Source3:	%{name}.pam
@@ -652,9 +652,12 @@ fi
 %attr(755,root,root) %{_bindir}/rad_counter
 %attr(755,root,root) %{_bindir}/radattr
 %attr(755,root,root) %{_bindir}/radclient
+%attr(755,root,root) %{_bindir}/radconf2json
 %attr(755,root,root) %{_bindir}/radcrypt
+%attr(755,root,root) %{_bindir}/raddict2json
 %attr(755,root,root) %{_bindir}/radeapclient
 %attr(755,root,root) %{_bindir}/radlast
+%attr(755,root,root) %{_bindir}/radmod2json
 %attr(755,root,root) %{_bindir}/radsecret
 %attr(755,root,root) %{_bindir}/radsniff
 %attr(755,root,root) %{_bindir}/radsqlrelay
@@ -930,6 +933,7 @@ fi
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/detail
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/detail.log
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/digest
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/dpsk
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/dynamic_clients
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/eap
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/raddb/mods-enabled/echo
